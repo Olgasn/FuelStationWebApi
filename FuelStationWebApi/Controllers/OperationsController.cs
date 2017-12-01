@@ -22,9 +22,21 @@ namespace FuelStationWebApi.Controllers
         [Produces("application/json")]
         public IEnumerable<OperationViewModel> Get()
         {
-          
-            return _context.OperationsViewModel.ToList();
-        }
+            var ovm = from o in _context.Operations.ToList()
+                                 join t in _context.Tanks.ToList()
+                                      on o.FuelID equals t.TankID
+                                 select new 
+                                 {
+                                     o.OperationID,
+                                     o.Inc_Exp,
+                                     t.TankType                         
+
+
+                                 };
+                return (IEnumerable<OperationViewModel>)ovm.ToList();
+            }
+
+
 
         // GET api/values/5
         [HttpGet("{id}")]

@@ -1,0 +1,184 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>Операции</title>
+    <link href="lib/bootstrap/dist/css/bootstrap.css" rel="stylesheet" />
+    <script src="lib/jquery/dist/jquery.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h2>Список операций</h2>
+        <form name="operationForm">
+            <input type="hidden" name="operationId" value="0" />
+            <div class="form-group">
+                <label for="operationName">Название:</label>
+                <input class="form-control" name="operationName" />
+            </div>
+            <div class="form-group">
+                <label for="address">Адрес:</label>
+                <input class="form-control" name="address" />
+            </div>
+            <div class="panel-body">
+                <button type="submit" class="btn btn-sm btn-primary">Сохранить</button>
+                <a id="reset" class="btn btn-sm btn-primary">Сбросить</a>
+            </div>
+        </form>
+        <p>
+            Этот список только лишь для демонстрации того, как загружать данные в после со списком: <select id="OperationsList" name="oper"></select>
+        </p>
+
+        <table class="table table-condensed table-striped table-bordered">
+            <thead><tr><th>Код</th><th>Название</th><th>Адрес</th><th></th></tr></thead>
+            <tbody></tbody>
+        </table>
+    </div>
+    
+    <script>
+
+
+
+        // Получение всех университетов
+        function Getoperations() {
+            $.ajax({
+                url: '/api/operations',
+                type: 'GET',
+                contentType: "application/json",
+                success: function (operations) {
+                    var rows = "";
+                    $.each(operations, function (index, operation) {
+                        // добавляем полученные элементы в таблицу
+                        rows += row(operation);
+                    })
+                    $("table tbody").append(rows);
+                 }
+            });
+        }
+        // Получение одного университета
+        function Getoperation(id) {
+            $.ajax({
+                url: '/api/operations/'+id,
+                type: 'GET',
+                contentType: "application/json",
+                success: function (operation) {
+                    var form = document.forms["operationForm"];
+                    form.elements["operationId"].value = operation.operationId;
+                    form.elements["operationName"].value = operation.operationName;
+                    form.elements["address"].value = operation.address;
+                }
+            });
+        }
+        // Добавление университета
+        function Createoperation(operationName, address) {
+            $.ajax({
+                url: "api/operations",
+                contentType: "application/json",
+                method: "POST",
+                data: JSON.stringify({
+                    operationName: operationName,
+                    address: address
+                }),
+                success: function (operation) {
+                    reset();
+                    $("table tbody").append(row(operation));
+                }
+            })
+        }
+        // Изменение университета
+        function Editoperation(operationId, operationName, address) {
+            $.ajax({
+                url: "api/operations",
+                contentType: "application/json",
+                method: "PUT",
+                data: JSON.stringify({
+                    operationId: operationId,
+                    operationName: operationName,
+                    address: address
+                }),
+                success: function (operation) {
+                    reset();
+                    $("tr[data-rowid='" + operation.operationId + "']").replaceWith(row(operation));
+                }
+            })
+        }
+
+        // сброс формы
+        function reset() {
+            var form = document.forms["operationForm"];
+            form.reset();
+            form.elements["operationId"].value = 0;
+        }
+
+        // Удаление университета
+        function Deleteoperation(id) {
+            $.ajax({
+                url: "api/operations/" + id,
+                contentType: "application/json",
+                method: "DELETE",
+                success: function (operation) {
+                    $("tr[data-rowid='" + operation.operationId + "']").remove();
+                }
+            })
+        }
+        // создание строки для таблицы
+        var row = function (operation) {
+            return "<tr data-rowid='" + operation.operationId + "'><td>" + operation.operationId + "</td>" +
+                "<td>" + operation.operationName + "</td> <td>" + operation.address + "</td>" +
+                "<td><a class='editLink' data-id='" + operation.operationId + "'>Изменить</a> | " +
+                "<a class='removeLink' data-id='" + operation.operationId + "'>Удалить</a></td></tr>";
+        }
+
+        // Получение списка университетов
+        function GetOperationsList() {
+            var listItems = "";
+            $.ajax({
+                url: '/api/operations',
+                type: 'GET',
+                contentType: "application/json",
+                success: function (operations) {
+                    $.each(operations, function (index, operation) {
+                        listItems = listItems + "<option value='" + operation.operationId + "'>" + operation.operationName + "</option>";
+                    });
+                    $("#OperationsList").html(listItems);
+                }
+            });
+        }
+
+        // сброс значений формы
+        $("#reset").click(function (e) {
+
+            e.preventDefault();
+            reset();
+        })
+
+
+
+        // отправка формы
+        $("form").submit(function (e) {
+            e.preventDefault();
+            var operationId = this.elements["operationId"].value;
+            var operationName = this.elements["operationName"].value;
+            var address = this.elements["address"].value;
+            if (operationId == 0)
+                Createoperation(operationName, address);
+            else
+                Editoperation(operationId, operationName, address);
+        });
+
+        // нажимаем на ссылку Изменить
+        $("body").on("click", ".editLink", function () {
+            var id = $(this).data("id");
+            Getoperation(id);
+        })
+        // нажимаем на ссылку Удалить
+        $("body").on("click", ".removeLink", function () {
+            var id = $(this).data("id");
+            Deleteoperation(id);
+        })
+        // загрузка университетов
+        Getoperations();
+        GetOperationsList()
+    </script>
+</body>
+</html>

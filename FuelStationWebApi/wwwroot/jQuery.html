@@ -1,0 +1,17 @@
+﻿<html>
+<head>
+    <meta charset='utf-8'>
+    <script src="lib/jquery/dist/jquery.js"></script>
+</head>
+<body>
+    <button>Загрузить</button>
+    <div id="universities"><h3>Нет университетов</h3></div>
+    <script type="text/javascript">
+        $(function(){
+            $('button').click(function(){
+                $('#universities').load("api/universities");
+            });
+        });
+    </script>
+</body>
+</html>

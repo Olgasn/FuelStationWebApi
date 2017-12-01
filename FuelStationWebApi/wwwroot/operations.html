@@ -13,33 +13,37 @@
         <form name="operationForm">
             <input type="hidden" name="operationId" value="0" />
             <div class="form-group">
-                <label for="operationName">Название:</label>
-                <input class="form-control" name="operationName" />
+                <label for="fuelType">Топливо:</label>
+                <select id="fuelId" name="fuelId"></select>
             </div>
             <div class="form-group">
-                <label for="address">Адрес:</label>
-                <input class="form-control" name="address" />
+                <label for="tankType">Емкость:</label>
+                <select id="tankId" name="tankId"></select>
+            </div>
+            <div class="form-group">
+                <label for="address">Приход-расход:</label>
+                <input class="form-control" name="inc_exp" />
+            </div>
+            <div class="form-group">
+                <label for="address">Дата:</label>
+                <input class="form-control" name="date" />
             </div>
             <div class="panel-body">
                 <button type="submit" class="btn btn-sm btn-primary">Сохранить</button>
                 <a id="reset" class="btn btn-sm btn-primary">Сбросить</a>
             </div>
         </form>
-        <p>
-            Этот список только лишь для демонстрации того, как загружать данные в после со списком: <select id="OperationsList" name="oper"></select>
-        </p>
+
 
         <table class="table table-condensed table-striped table-bordered">
-            <thead><tr><th>Код</th><th>Название</th><th>Адрес</th><th></th></tr></thead>
+            <thead><tr><th>Код</th><th>Топливо</th><th>Емкость</th><th>Приход-расход</th><th>Дата</th><th></th></tr></thead>
             <tbody></tbody>
         </table>
     </div>
     
     <script>
 
-
-
-        // Получение всех университетов
+        // Получение всех операций
         function Getoperations() {
             $.ajax({
                 url: '/api/operations',
@@ -55,7 +59,7 @@
                  }
             });
         }
-        // Получение одного университета
+        // Получение одной операции
         function Getoperation(id) {
             $.ajax({
                 url: '/api/operations/'+id,
@@ -63,21 +67,25 @@
                 contentType: "application/json",
                 success: function (operation) {
                     var form = document.forms["operationForm"];
-                    form.elements["operationId"].value = operation.operationId;
-                    form.elements["operationName"].value = operation.operationName;
-                    form.elements["address"].value = operation.address;
+                    form.elements["operationId"].value = operation.operationID;
+                    form.elements["fuelId"].value = operation.fuelId;
+                    form.elements["tankId"].value = operation.tankId;
+                    form.elements["inc_exp"].value = operation.inc_Exp;
+                    form.elements["date"].value = operation.date;
                 }
             });
         }
-        // Добавление университета
-        function Createoperation(operationName, address) {
+        // Добавление операции
+        function Createoperation(fuelId, tankId, inc_Exp, date) {
             $.ajax({
                 url: "api/operations",
                 contentType: "application/json",
                 method: "POST",
                 data: JSON.stringify({
-                    operationName: operationName,
-                    address: address
+                    fuelId: fuelId,
+                    tankId: tankId,
+                    inc_Exp: inc_Exp,
+                    date: date
                 }),
                 success: function (operation) {
                     reset();
@@ -85,20 +93,22 @@
                 }
             })
         }
-        // Изменение университета
-        function Editoperation(operationId, operationName, address) {
+        // Изменение операции
+        function Editoperation(operationID, fuelId, tankId, inc_Exp, date) {
             $.ajax({
                 url: "api/operations",
                 contentType: "application/json",
                 method: "PUT",
                 data: JSON.stringify({
-                    operationId: operationId,
-                    operationName: operationName,
-                    address: address
+                    operationID: operationID,
+                    fuelId: fuelId,
+                    tankId: tankId,
+                    inc_Exp: inc_Exp,
+                    date: date
                 }),
                 success: function (operation) {
                     reset();
-                    $("tr[data-rowid='" + operation.operationId + "']").replaceWith(row(operation));
+                    $("tr[data-rowid='" + operation.operationID + "']").replaceWith(row(operation));
                 }
             })
         }
@@ -110,40 +120,60 @@
             form.elements["operationId"].value = 0;
         }
 
-        // Удаление университета
+        // Удаление операции
         function Deleteoperation(id) {
             $.ajax({
                 url: "api/operations/" + id,
                 contentType: "application/json",
                 method: "DELETE",
                 success: function (operation) {
-                    $("tr[data-rowid='" + operation.operationId + "']").remove();
+                    $("tr[data-rowid='" + operation.operationID + "']").remove();
                 }
             })
         }
         // создание строки для таблицы
         var row = function (operation) {
-            return "<tr data-rowid='" + operation.operationId + "'><td>" + operation.operationId + "</td>" +
-                "<td>" + operation.operationName + "</td> <td>" + operation.address + "</td>" +
-                "<td><a class='editLink' data-id='" + operation.operationId + "'>Изменить</a> | " +
-                "<a class='removeLink' data-id='" + operation.operationId + "'>Удалить</a></td></tr>";
+            return "<tr data-rowid='" + operation.operationID + "'><td>" + operation.operationID + "</td>" +
+                "<td>" + operation.fuelType + "</td>" +
+                "<td>" + operation.tankType + "</td>" +
+                "<td>" + operation.inc_Exp + "</td>" +
+                "<td>" + operation.date + "</td>" +
+                "<td><a class='editLink' data-id='" + operation.operationID + "'>Изменить</a> | " +
+                "<a class='removeLink' data-id='" + operation.operationID + "'>Удалить</a></td></tr>";
         }
 
-        // Получение списка университетов
-        function GetOperationsList() {
+        // Получение списка видов топлива
+        function GetFuels() {
             var listItems = "";
             $.ajax({
-                url: '/api/operations',
+                url: '/api/operations/fuels',
                 type: 'GET',
                 contentType: "application/json",
-                success: function (operations) {
-                    $.each(operations, function (index, operation) {
-                        listItems = listItems + "<option value='" + operation.operationId + "'>" + operation.operationName + "</option>";
+                success: function (fuels) {
+                    $.each(fuels, function (index, fuel) {
+                        listItems = listItems + "<option value='" + fuel.fuelId + "'>" + fuel.fuelType + "</option>";
                     });
-                    $("#OperationsList").html(listItems);
+                    $("#fuelId").html(listItems);
                 }
             });
         }
+
+        // Получение списка емкостей
+        function GetTanks() {
+            var listItems = "";
+            $.ajax({
+                url: '/api/operations/tanks',
+                type: 'GET',
+                contentType: "application/json",
+                success: function (tanks) {
+                    $.each(tanks, function (index, tank) {
+                        listItems = listItems + "<option value='" + tank.tankId + "'>" + tank.tankType + "</option>";
+                    });
+                    $("#tankId").html(listItems);
+                }
+            });
+        }
+
 
         // сброс значений формы
         $("#reset").click(function (e) {
@@ -153,17 +183,18 @@
         })
 
 
-
         // отправка формы
         $("form").submit(function (e) {
             e.preventDefault();
             var operationId = this.elements["operationId"].value;
-            var operationName = this.elements["operationName"].value;
-            var address = this.elements["address"].value;
+            var fuelId = this.elements["fuelId"].value;
+            var tankId = this.elements["tankId"].value;
+            var inc_exp = this.elements["inc_exp"].value;
+            var data = this.elements["data"].value;
             if (operationId == 0)
-                Createoperation(operationName, address);
+                Createoperation(fuelId, tankId, inc_Exp, date);
             else
-                Editoperation(operationId, operationName, address);
+                Editoperation(operationID, fuelId, tankId, inc_Exp, date);
         });
 
         // нажимаем на ссылку Изменить
@@ -176,9 +207,12 @@
             var id = $(this).data("id");
             Deleteoperation(id);
         })
-        // загрузка университетов
+        // загрузка данных
         Getoperations();
-        GetOperationsList()
+        GetFuels();
+        GetTanks();
+
+
     </script>
 </body>
 </html>

@@ -5,6 +5,7 @@ using FuelStationWebApi.Models;
 using FuelStationWebApi.Data;
 using Microsoft.EntityFrameworkCore;
 using FuelStationWebApi.ViewModels;
+using Newtonsoft.Json;
 
 namespace FuelStationWebApi.Controllers
 {
@@ -20,21 +21,37 @@ namespace FuelStationWebApi.Controllers
         // GET api/values
         [HttpGet]
         [Produces("application/json")]
-        public IEnumerable<OperationViewModel> Get()
+        public List<OperationViewModel> Get()
         {
-            var ovm = from o in _context.Operations.ToList()
-                                 join t in _context.Tanks.ToList()
-                                      on o.FuelID equals t.TankID
-                                 select new 
-                                 {
-                                     o.OperationID,
-                                     o.Inc_Exp,
-                                     t.TankType                         
+            var ovm = _context.Operations.Include(t => t.Tank).Include(f => f.Fuel).Select(o=> 
+                new OperationViewModel
+                {
+                    OperationID=o.OperationID,
+                    TankID=o.TankID,
+                    FuelID=o.FuelID,
+                    FuelType=o.Fuel.FuelType,
+                    TankType=o.Tank.TankType,
+                    Inc_Exp=o.Inc_Exp,
+                    Date=o.Date
 
+                });
 
-                                 };
-                return (IEnumerable<OperationViewModel>)ovm.ToList();
-            }
+            return ovm.Take(20).ToList();
+        }
+        // GET api/values
+        [HttpGet("fuels")]
+        [Produces("application/json")]
+        public IEnumerable<Fuel> GetFuels()
+        {
+            return _context.Fuels.ToList();
+        }
+        // GET api/values
+        [HttpGet("tanks")]
+        [Produces("application/json")]
+        public IEnumerable<Tank> GetTanks()
+        {
+            return _context.Tanks.ToList();
+        }
 
 
 

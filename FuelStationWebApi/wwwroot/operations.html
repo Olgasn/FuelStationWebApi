@@ -6,6 +6,7 @@
     <title>Операции</title>
     <link href="lib/bootstrap/dist/css/bootstrap.css" rel="stylesheet" />
     <script src="lib/jquery/dist/jquery.js"></script>
+ 
 </head>
 <body>
     <div class="container">
@@ -14,19 +15,21 @@
             <input type="hidden" name="operationId" value="0" />
             <div class="form-group">
                 <label for="fuelType">Топливо:</label>
-                <select id="fuelId" name="fuelId"></select>
+                <select id="fuelId" name="fuelId">
+                </select>
             </div>
             <div class="form-group">
                 <label for="tankType">Емкость:</label>
-                <select id="tankId" name="tankId"></select>
+                <select id="tankId" name="tankId">
+                </select>
             </div>
             <div class="form-group">
                 <label for="address">Приход-расход:</label>
                 <input class="form-control" name="inc_exp" />
             </div>
             <div class="form-group">
-                <label for="address">Дата:</label>
-                <input class="form-control" name="date" />
+                <label for="date">Дата:</label>
+                <input class="form-control" name="date" id="date"/>
             </div>
             <div class="panel-body">
                 <button type="submit" class="btn btn-sm btn-primary">Сохранить</button>
@@ -68,8 +71,8 @@
                 success: function (operation) {
                     var form = document.forms["operationForm"];
                     form.elements["operationId"].value = operation.operationID;
-                    form.elements["fuelId"].value = operation.fuelId;
-                    form.elements["tankId"].value = operation.tankId;
+                    form.elements["fuelId"].value = operation.fuelID; form.elements["fuelId"].selectedIndex = operation.fuelID;
+                    form.elements["tankId"].value = operation.tankID; form.elements["tankId"].selectedIndex = operation.tankID;
                     form.elements["inc_exp"].value = operation.inc_Exp;
                     form.elements["date"].value = operation.date;
                 }
@@ -150,6 +153,7 @@
                 type: 'GET',
                 contentType: "application/json",
                 success: function (fuels) {
+                    listItems = listItems + "<option value=0 selected>(выбор)</option>";
                     $.each(fuels, function (index, fuel) {
                         listItems = listItems + "<option value='" + fuel.fuelId + "'>" + fuel.fuelType + "</option>";
                     });
@@ -166,6 +170,7 @@
                 type: 'GET',
                 contentType: "application/json",
                 success: function (tanks) {
+                    listItems = listItems + "<option value=0 selected>(выбор)</option>";
                     $.each(tanks, function (index, tank) {
                         listItems = listItems + "<option value='" + tank.tankId + "'>" + tank.tankType + "</option>";
                     });
@@ -185,33 +190,37 @@
 
         // отправка формы
         $("form").submit(function (e) {
+
             e.preventDefault();
-            var operationId = this.elements["operationId"].value;
-            var fuelId = this.elements["fuelId"].value;
-            var tankId = this.elements["tankId"].value;
-            var inc_exp = this.elements["inc_exp"].value;
-            var data = this.elements["data"].value;
-            if (operationId == 0)
-                Createoperation(fuelId, tankId, inc_Exp, date);
+            var operationID = this.elements["operationId"].value;
+            var fuelID = this.elements["fuelId"].selectedIndex;
+            var tankID = this.elements["tankId"].selectedIndex;
+            var inc_Exp = this.elements["inc_exp"].value;
+            var date = this.elements["date"].value;
+            if (operationID == 0)
+                Createoperation(fuelID, tankID, inc_Exp, date);
             else
-                Editoperation(operationID, fuelId, tankId, inc_Exp, date);
+                Editoperation(operationID, fuelID, tankID, inc_Exp, date);
         });
 
-        // нажимаем на ссылку Изменить
+        // нажатие на ссылку Изменить
         $("body").on("click", ".editLink", function () {
             var id = $(this).data("id");
             Getoperation(id);
         })
-        // нажимаем на ссылку Удалить
+        // нажатие на ссылку Удалить
         $("body").on("click", ".removeLink", function () {
             var id = $(this).data("id");
             Deleteoperation(id);
         })
-        // загрузка данных
+        // загрузка данных для таблицы и ее формирование
         Getoperations();
+        // загрузка данных для списка видов топлива и его формирование
         GetFuels();
+        // загрузка данных для списка емкостей и его формирование
         GetTanks();
 
+        
 
     </script>
 </body>

@@ -11,7 +11,7 @@ using System;
 namespace FuelStationWebApi.Migrations
 {
     [DbContext(typeof(FuelsContext))]
-    [Migration("20171201103309_Initial")]
+    [Migration("20171202090257_Initial")]
     partial class Initial
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

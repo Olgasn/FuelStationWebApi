@@ -6,6 +6,7 @@ using FuelStationWebApi.Data;
 using Microsoft.EntityFrameworkCore;
 using FuelStationWebApi.ViewModels;
 using Newtonsoft.Json;
+using System;
 
 namespace FuelStationWebApi.Controllers
 {
@@ -35,7 +36,6 @@ namespace FuelStationWebApi.Controllers
                     Date=o.Date
 
                 });
-
             return ovm.OrderByDescending(t=>t.OperationID).Take(20).ToList();
         }
         // GET api/values

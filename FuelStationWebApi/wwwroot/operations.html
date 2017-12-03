@@ -6,6 +6,9 @@
     <title>Операции</title>
     <link href="lib/bootstrap/dist/css/bootstrap.css" rel="stylesheet" />
     <script src="lib/jquery/dist/jquery.js"></script>
+    <link href="lib/jquery-ui/themes/base/jquery-ui.min.css" rel="stylesheet" />
+    <script src="lib/jquery-ui/jquery-ui.js"></script>
+    <script src="lib/jquery-ui/ui/i18n/datepicker-ru.js"></script>
  
 </head>
 <body>
@@ -74,7 +77,7 @@
                     form.elements["fuelId"].selectedIndex = operation.fuelID;
                     form.elements["tankId"].selectedIndex = operation.tankID;
                     form.elements["inc_exp"].value = operation.inc_Exp;
-                    form.elements["date"].value = operation.date;
+                    form.elements["date"].value = operation.date.substring(0, 10);
                 }
             });
         }
@@ -146,7 +149,7 @@
                 "<td>" + operation.fuelType + "</td>" +
                 "<td>" + operation.tankType + "</td>" +
                 "<td>" + operation.inc_Exp + "</td>" +
-                "<td>" + operation.date + "</td>" +
+                "<td>" + operation.date.substring(0,10) + "</td>" +
                 "<td><a class='editLink' data-id='" + operation.operationID + "'>Изменить</a> | " +
                 "<a class='removeLink' data-id='" + operation.operationID + "'>Удалить</a></td></tr>";
         }
@@ -229,5 +232,12 @@
         
 
     </script>
+    //ввод даты с использованием специального окна
+    <script type="text/javascript">
+           $(document).ready(function () {
+               $("#date").datepicker({ dateFormat: "yy-mm-dd" });
+           });
+    </script>
 </body>
+
 </html>

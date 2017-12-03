@@ -71,8 +71,8 @@
                 success: function (operation) {
                     var form = document.forms["operationForm"];
                     form.elements["operationId"].value = operation.operationID;
-                    form.elements["fuelId"].value = operation.fuelID; form.elements["fuelId"].selectedIndex = operation.fuelID;
-                    form.elements["tankId"].value = operation.tankID; form.elements["tankId"].selectedIndex = operation.tankID;
+                    form.elements["fuelId"].selectedIndex = operation.fuelID;
+                    form.elements["tankId"].selectedIndex = operation.tankID;
                     form.elements["inc_exp"].value = operation.inc_Exp;
                     form.elements["date"].value = operation.date;
                 }
@@ -92,6 +92,9 @@
                 }),
                 success: function (operation) {
                     reset();
+                    var form = document.forms["operationForm"];
+                    operation.tankType = form.elements["tankId"].options[tankId].text;
+                    operation.fuelType = form.elements["fuelId"].options[fuelId].text;
                     $("table tbody").append(row(operation));
                 }
             })
@@ -111,6 +114,9 @@
                 }),
                 success: function (operation) {
                     reset();
+                    var form = document.forms["operationForm"];
+                    operation.tankType = form.elements["tankId"].options[tankId].text;
+                    operation.fuelType = form.elements["fuelId"].options[fuelId].text;
                     $("tr[data-rowid='" + operation.operationID + "']").replaceWith(row(operation));
                 }
             })

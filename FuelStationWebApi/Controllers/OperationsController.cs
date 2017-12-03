@@ -36,7 +36,7 @@ namespace FuelStationWebApi.Controllers
 
                 });
 
-            return ovm.Take(20).ToList();
+            return ovm.OrderByDescending(t=>t.OperationID).Take(20).ToList();
         }
         // GET api/values
         [HttpGet("fuels")]
@@ -94,6 +94,8 @@ namespace FuelStationWebApi.Controllers
 
             _context.Update(operation);
             _context.SaveChanges();
+
+
             return Ok(operation);
         }
 

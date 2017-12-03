@@ -2,6 +2,9 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp2.0</TargetFramework>
+    <Authors>Asenchik Oleg</Authors>
+    <Company>GSTU</Company>
+    <Version>0.1.0</Version>
   </PropertyGroup>
 
   <ItemGroup>

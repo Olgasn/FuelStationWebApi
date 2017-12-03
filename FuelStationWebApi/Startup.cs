@@ -43,7 +43,7 @@ namespace FuelStationWebApi
             app.UseDefaultFiles();
             app.UseStaticFiles();
             app.UseMvc();
-            // инициализация базы данных по университетам
+            // инициализация базы данных
             DbInitializer.Initialize(context);
         }
     }

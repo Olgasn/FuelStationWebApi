@@ -5,8 +5,6 @@ using FuelStationWebApi.Models;
 using FuelStationWebApi.Data;
 using Microsoft.EntityFrameworkCore;
 using FuelStationWebApi.ViewModels;
-using Newtonsoft.Json;
-using System;
 
 namespace FuelStationWebApi.Controllers
 {

@@ -12,6 +12,7 @@ namespace FuelStationWebApi
 
         public static IWebHost BuildWebHost(string[] args) =>
             WebHost.CreateDefaultBuilder(args)
+                //.UseUrls("http://192.168.1.37:80")            
                 .UseStartup<Startup>()
                 .Build();
     }

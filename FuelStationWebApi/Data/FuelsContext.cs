@@ -1,8 +1,5 @@
 ﻿using FuelStationWebApi.Models;
-using FuelStationWebApi.ViewModels;
 using Microsoft.EntityFrameworkCore;
-using System.Collections;
-using System.Collections.Generic;
 
 namespace FuelStationWebApi.Data
 {

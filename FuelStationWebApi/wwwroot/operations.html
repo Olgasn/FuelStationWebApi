@@ -18,13 +18,11 @@
             <input type="hidden" name="operationId" value="0" />
             <div class="form-group">
                 <label for="fuelType">Топливо:</label>
-                <select id="fuelId" name="fuelId">
-                </select>
+                <select id="fuelId" name="fuelId"></select>
             </div>
             <div class="form-group">
                 <label for="tankType">Емкость:</label>
-                <select id="tankId" name="tankId">
-                </select>
+                <select id="tankId" name="tankId"></select>
             </div>
             <div class="form-group">
                 <label for="address">Приход-расход:</label>
@@ -229,14 +227,10 @@
         // загрузка данных для списка емкостей и его формирование
         GetTanks();
 
-        
-
-    </script>
-    //ввод даты с использованием специального окна
-    <script type="text/javascript">
-           $(document).ready(function () {
+        //ввод даты с использованием специального окна
+        $(document).ready(function () {
                $("#date").datepicker({ dateFormat: "yy-mm-dd" });
-           });
+        });
     </script>
 </body>
 

@@ -15,9 +15,10 @@
     <div class="container">
         <h2>Список операций</h2>
         <form name="operationForm">
+            <label for="operationId" id="typeCRUD" name="typeCRUD">Добавить:</label>
             <input type="hidden" name="operationId" value="0" />
             <div class="form-group">
-                <label for="fuelType">Топливо:</label>
+                <label Добавить>Топливо:</label>
                 <select id="fuelId" name="fuelId"></select>
             </div>
             <div class="form-group">
@@ -30,7 +31,7 @@
             </div>
             <div class="form-group">
                 <label for="date">Дата:</label>
-                <input class="form-control" name="date" id="date"/>
+                <input class="form-control" name="date" id="date" />
             </div>
             <div class="panel-body">
                 <button type="submit" class="btn btn-sm btn-primary">Сохранить</button>
@@ -128,6 +129,7 @@
             var form = document.forms["operationForm"];
             form.reset();
             form.elements["operationId"].value = 0;
+            $("#typeCRUD").html("Добавить:");
         }
 
         // Удаление операции
@@ -189,7 +191,6 @@
 
         // сброс значений формы
         $("#reset").click(function (e) {
-
             e.preventDefault();
             reset();
         })
@@ -213,12 +214,14 @@
         // нажатие на ссылку Изменить
         $("body").on("click", ".editLink", function () {
             var id = $(this).data("id");
+            $("#typeCRUD").html("Изменить:");
             Getoperation(id);
         })
         // нажатие на ссылку Удалить
         $("body").on("click", ".removeLink", function () {
             var id = $(this).data("id");
             Deleteoperation(id);
+            reset();
         })
         // загрузка данных для таблицы и ее формирование
         Getoperations();

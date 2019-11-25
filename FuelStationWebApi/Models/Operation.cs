@@ -18,7 +18,6 @@ namespace FuelStationWebApi.Models
         //Дата операции
         [Display(Name = "Дата операции")]
         [DataType(DataType.Date)]
-        [DisplayFormat(DataFormatString = "{0:dd'/'MM'/'yyyy}")]
         public DateTime Date { get; set; }
         //ссылка на виды топлива
         public virtual Fuel Fuel { get; set; }

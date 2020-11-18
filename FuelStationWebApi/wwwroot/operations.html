@@ -16,7 +16,7 @@
         <h2>Список операций</h2>
         <form name="operationForm">
             <label for="operationId" id="typeCRUD" name="typeCRUD">Добавить:</label>
-            <input type="hidden" name="operationId" value="0" />
+            <input type="hidden" id="operationId" name="operationId" value=0 />
             <div class="form-group">
                 <label Добавить>Топливо:</label>
                 <select id="fuelId" name="fuelId"></select>
@@ -26,8 +26,8 @@
                 <select id="tankId" name="tankId"></select>
             </div>
             <div class="form-group">
-                <label for="address">Приход-расход:</label>
-                <input class="form-control" name="inc_exp" />
+                <label for="inc_exp">Приход-расход:</label>
+                <input class="form-control" name="inc_exp"  id="inc_exp" />
             </div>
             <div class="form-group">
                 <label for="date">Дата:</label>
@@ -89,7 +89,7 @@
                 data: JSON.stringify({
                     fuelId: fuelId,
                     tankId: tankId,
-                    inc_Exp: inc_Exp,
+                    inc_Exp: parseFloat(inc_Exp),
                     date: date
                 }),
                 success: function (operation) {
@@ -108,10 +108,10 @@
                 contentType: "application/json",
                 method: "PUT",
                 data: JSON.stringify({
-                    operationID: operationID,
+                    operationID: parseInt(operationID),
                     fuelId: fuelId,
                     tankId: tankId,
-                    inc_Exp: inc_Exp,
+                    inc_Exp: parseFloat(inc_Exp),
                     date: date
                 }),
                 success: function (operation) {

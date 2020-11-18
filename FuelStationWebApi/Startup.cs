@@ -30,17 +30,29 @@ namespace FuelStationWebApi
             //    options.UseMySQL(Configuration.GetConnectionString("CouncilConnectionMysql")));
 
             // Add framework services.
-            services.AddMvc();
+            services.AddControllers();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env, FuelsContext context)
+        public void Configure(IApplicationBuilder app, FuelsContext context)
         {
 
+            app.UseDeveloperExceptionPage();
+
+            app.UseDefaultFiles();
             app.UseStaticFiles();
-            app.UseMvc();
+
             // инициализация базы данных
             DbInitializer.Initialize(context);
+
+            app.UseRouting();
+
+            app.UseAuthorization();
+
+            app.UseEndpoints(endpoints =>
+            {
+                endpoints.MapControllers();
+            });
         }
     }
 }

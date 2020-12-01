@@ -15,34 +15,48 @@
     <div class="container">
         <h2>Список операций</h2>
         <form name="operationForm">
-            <label for="operationId" id="typeCRUD" name="typeCRUD">Добавить:</label>
-            <input type="hidden" id="operationId" name="operationId" value=0 />
-            <div class="form-group">
-                <label Добавить>Топливо:</label>
-                <select id="fuelId" name="fuelId"></select>
-            </div>
-            <div class="form-group">
-                <label for="tankType">Емкость:</label>
-                <select id="tankId" name="tankId"></select>
-            </div>
-            <div class="form-group">
-                <label for="inc_exp">Приход-расход:</label>
-                <input class="form-control" name="inc_exp"  id="inc_exp" />
-            </div>
-            <div class="form-group">
-                <label for="date">Дата:</label>
-                <input class="form-control" name="date" id="date" />
-            </div>
-            <div class="panel-body">
-                <button type="submit" class="btn btn-sm btn-primary">Сохранить</button>
-                <a id="reset" class="btn btn-sm btn-primary">Сбросить</a>
-            </div>
+            <table border="0">
+                <tr>
+                    <td>
+                        <label for="operationId" id="typeCRUD" name="typeCRUD">Добавить:</label>
+                        <input type="hidden" id="operationId" name="operationId" value=0 />
+                        <div class="form-group">
+                            <label Добавить>Топливо:</label>
+                            <select id="fuelId" name="fuelId"></select>
+                        </div>
+                        <div class="form-group">
+                            <label for="tankType">Емкость:</label>
+                            <select id="tankId" name="tankId"></select>
+                        </div>
+                    </td>
+                    <td>
+                        <a id="filter" class="btn btn-sm btn-primary">Загрузить</a>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2">
+                        <div class="form-group">
+                            <label for="inc_exp">Приход-расход:</label>
+                            <input class="form-control" name="inc_exp" id="inc_exp" />
+                        </div>
+                        <div class="form-group">
+                            <label for="date">Дата:</label>
+                            <input class="form-control" name="date" id="date" />
+                        </div>
+                        <div class="panel-body">
+                            <button type="submit" class="btn btn-sm btn-primary">Сохранить</button>
+                            <a id="reset" class="btn btn-sm btn-primary">Сбросить</a>
+
+                        </div>
+                    </td>
+                </tr>
+            </table>
         </form>
 
 
         <table class="table table-condensed table-striped table-bordered">
-            <thead><tr><th>Код</th><th>Топливо</th><th>Емкость</th><th>Приход-расход</th><th>Дата</th><th></th></tr></thead>
-            <tbody></tbody>
+            <thead><tr><th>Код</th><th>Топливо</th><th>Емкость</th><th>Приход-расход</th><th>Дата</th><th>Действие</th></tr></thead>
+            <tbody id="data"></tbody>
         </table>
     </div>
     
@@ -60,8 +74,29 @@
                         // добавляем полученные элементы в таблицу
                         rows += row(operation);
                     })
-                    $("table tbody").append(rows);
+                    $("table tbody#data").append(rows);
                  }
+            });
+        }
+
+        // Получение фильтрованных операций
+        function GetFilteredOperations() {
+            var form = document.forms["operationForm"];
+            var fuelID = form.elements["fuelId"].selectedIndex;
+            var tankID = form.elements["tankId"].selectedIndex;
+            $.ajax({
+                url: '/api/operations/filteredoperations?TankID=' + tankID + '&FuelID=' + fuelID,
+                type: 'GET',
+                contentType: "application/json",
+                success: function (operations) {
+                    var rows = "";
+                    $("table tbody#data").html("");
+                    $.each(operations, function (index, operation) {
+                        // добавляем полученные элементы в таблицу
+                        rows += row(operation);
+                    })
+                    $("table tbody#data").append(rows);
+                }
             });
         }
         // Получение одной операции
@@ -97,7 +132,7 @@
                     var form = document.forms["operationForm"];
                     operation.tankType = form.elements["tankId"].options[tankId].text;
                     operation.fuelType = form.elements["fuelId"].options[fuelId].text;
-                    $("table tbody").append(row(operation));
+                    $("table tbody#data").append(row(operation));
                 }
             })
         }
@@ -196,6 +231,11 @@
         })
 
 
+        // фильтрация
+        $("#filter").click(function (e) {
+            GetFilteredOperations();            
+        })
+
         // отправка формы
         $("form").submit(function (e) {
 
@@ -223,6 +263,8 @@
             Deleteoperation(id);
             reset();
         })
+
+
         // загрузка данных для таблицы и ее формирование
         Getoperations();
         // загрузка данных для списка видов топлива и его формирование

@@ -1,10 +1,10 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using Microsoft.AspNetCore.Mvc;
+﻿using FuelStationWebApi.Data;
 using FuelStationWebApi.Models;
-using FuelStationWebApi.Data;
-using Microsoft.EntityFrameworkCore;
 using FuelStationWebApi.ViewModels;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace FuelStationWebApi.Controllers
 {
@@ -22,20 +22,53 @@ namespace FuelStationWebApi.Controllers
         [Produces("application/json")]
         public List<OperationViewModel> Get()
         {
-            var ovm = _context.Operations.Include(t => t.Tank).Include(f => f.Fuel).Select(o=> 
+            IQueryable<OperationViewModel> ovm = _context.Operations.Include(t => t.Tank).Include(f => f.Fuel).Select(o =>
                 new OperationViewModel
                 {
-                    OperationID=o.OperationID,
-                    TankID=o.TankID,
-                    FuelID=o.FuelID,
-                    FuelType=o.Fuel.FuelType,
-                    TankType=o.Tank.TankType,
-                    Inc_Exp=o.Inc_Exp,
-                    Date=o.Date
+                    OperationID = o.OperationID,
+                    TankID = o.TankID,
+                    FuelID = o.FuelID,
+                    FuelType = o.Fuel.FuelType,
+                    TankType = o.Tank.TankType,
+                    Inc_Exp = o.Inc_Exp,
+                    Date = o.Date
 
                 });
             return ovm.ToList();
         }
+
+
+        [HttpGet("FilteredOperations")]
+        [Produces("application/json")]
+        public List<OperationViewModel> GetFilteredOperations([Bind("FuelID", "TankID")] Operation operation)
+        {
+            IQueryable<OperationViewModel> ovm = _context.Operations.Include(t => t.Tank).Include(f => f.Fuel)
+                .Select(o =>
+                new OperationViewModel
+                {
+                    OperationID = o.OperationID,
+                    TankID = o.TankID,
+                    FuelID = o.FuelID,
+                    FuelType = o.Fuel.FuelType,
+                    TankType = o.Tank.TankType,
+                    Inc_Exp = o.Inc_Exp,
+                    Date = o.Date
+
+                });
+            if (operation.TankID > 0)
+            {
+                ovm = ovm.Where(op => op.TankID == operation.TankID);
+
+            }
+            if (operation.FuelID > 0)
+            {
+                ovm = ovm.Where(op => op.FuelID == operation.FuelID);
+
+            }
+            return ovm.ToList();
+        }
+
+
         // GET api/values
         [HttpGet("fuels")]
         [Produces("application/json")]
@@ -52,7 +85,6 @@ namespace FuelStationWebApi.Controllers
         }
 
 
-
         // GET api/values/5
         [HttpGet("{id}")]
         public IActionResult Get(int id)
@@ -65,7 +97,7 @@ namespace FuelStationWebApi.Controllers
 
         // POST api/values
         [HttpPost]
-        public IActionResult Post([FromBody]Operation operation)
+        public IActionResult Post([FromBody] Operation operation)
         {
             if (operation == null)
             {
@@ -79,7 +111,7 @@ namespace FuelStationWebApi.Controllers
 
         // PUT api/values/5
         [HttpPut]
-        public IActionResult Put([FromBody]Operation operation)
+        public IActionResult Put([FromBody] Operation operation)
         {
             if (operation == null)
             {

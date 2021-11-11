@@ -138,7 +138,7 @@ namespace FuelStationWebApi.Controllers
         /// Объект передается в теле запроса
         /// </remarks>
         /// <param name="operation">объект, определяющий операцию</param>
-        /// <returns>A status</returns>
+        /// <returns>Статус</returns>
         // PUT api/values/5
         [HttpPut]
         public IActionResult Put([FromBody] Operation operation)
@@ -159,13 +159,13 @@ namespace FuelStationWebApi.Controllers
             return Ok(operation);
         }
         /// <summary>
-        /// Удаление данных одной опреции
+        /// Удаление данных одной операции
         /// </summary>
         /// <remarks>
         /// Описание параметра
         /// </remarks>
-        /// <param name="id">Код опарации</param>
-        /// <returns>A status</returns>
+        /// <param name="id">Код операции</param>
+        /// <returns>Статус</returns>
         // DELETE api/values/5
         [HttpDelete("{id}")]
         public IActionResult Delete(int id)

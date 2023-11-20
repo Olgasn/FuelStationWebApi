@@ -126,7 +126,6 @@ namespace FuelStationWebApi.Controllers
             {
                 return BadRequest();
             }
-
             _context.Operations.Add(operation);
             _context.SaveChanges();
             return Ok(operation);
@@ -151,11 +150,8 @@ namespace FuelStationWebApi.Controllers
             {
                 return NotFound();
             }
-
             _context.Update(operation);
             _context.SaveChanges();
-
-
             return Ok(operation);
         }
         /// <summary>

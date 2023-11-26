@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width" />
     <title>Операции</title>
-    <link href="lib/bootstrap/dist/css/bootstrap.css" rel="stylesheet" />
+    <link href="lib/bootstrap/css/bootstrap.css" rel="stylesheet" />
     <script src="lib/jquery/dist/jquery.js"></script>
     <link href="lib/jquery-ui/themes/base/jquery-ui.min.css" rel="stylesheet" />
     <script src="lib/jquery-ui/jquery-ui.js"></script>
@@ -197,9 +197,9 @@
                 type: 'GET',
                 contentType: "application/json",
                 success: function (fuels) {
-                    listItems = listItems + "<option value=0 selected>(выбор)</option>";
+                    listItems += "<option value=0 selected>(выбор)</option>";
                     $.each(fuels, function (index, fuel) {
-                        listItems = listItems + "<option value='" + fuel.fuelId + "'>" + fuel.fuelType + "</option>";
+                        listItems +="<option value='" + fuel.fuelId + "'>" + fuel.fuelType + "</option>";
                     });
                     $("#fuelId").html(listItems);
                 }
@@ -214,15 +214,17 @@
                 type: 'GET',
                 contentType: "application/json",
                 success: function (tanks) {
-                    listItems = listItems + "<option value=0 selected>(выбор)</option>";
+                    listItems += "<option value=0 selected>(выбор)</option>";
                     $.each(tanks, function (index, tank) {
-                        listItems = listItems + "<option value='" + tank.tankId + "'>" + tank.tankType + "</option>";
+                        listItems += "<option value='" + tank.tankId + "'>" + tank.tankType + "</option>";
                     });
                     $("#tankId").html(listItems);
                 }
             });
         }
 
+
+        // Обработка документа
 
         // сброс значений формы
         $("#reset").click(function (e) {
@@ -238,7 +240,6 @@
 
         // отправка формы
         $("form").submit(function (e) {
-
             e.preventDefault();
             var operationID = this.elements["operationId"].value;
             var fuelID = this.elements["fuelId"].selectedIndex;
@@ -257,13 +258,13 @@
             $("#typeCRUD").html("Изменить:");
             Getoperation(id);
         })
+
         // нажатие на ссылку Удалить
         $("body").on("click", ".removeLink", function () {
             var id = $(this).data("id");
             Deleteoperation(id);
             reset();
         })
-
 
         // загрузка данных для таблицы и ее формирование
         Getoperations();
@@ -276,6 +277,7 @@
         $(document).ready(function () {
                $("#date").datepicker({ dateFormat: "yy-mm-dd" });
         });
+
     </script>
 </body>
 

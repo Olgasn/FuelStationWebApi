@@ -7,4 +7,5 @@
 
 с использованием jQuery: http://host:xxxx/jq_operations.html
 
+
 с использованием Fetch API: http://host:xxxx/fetch_operations.html

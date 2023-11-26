@@ -50,7 +50,7 @@
                             <input class="form-control" name="date" id="date" />
                         </div>
                         <div class="panel-body">
-                            <button type="submit" class="btn btn-sm btn-primary">Сохранить</button>
+                            <button id="saveBtn" type="submit" class="btn btn-sm btn-primary">Сохранить</button>
                             <a id="reset" class="btn btn-sm btn-primary">Сбросить</a>
 
                         </div>
@@ -313,17 +313,19 @@
         document.getElementById("filter").addEventListener("click", () => GetFilteredOperations());
 
         // отправка формы
-        document.forms["operationForm"].addEventListener("submit", async () => async function (e) {
+        document.getElementById("saveBtn").addEventListener("click", async function (e)
+        {
             e.preventDefault();
-            var operationID = this.elements["operationId"].value;
-            var fuelID = this.elements["fuelId"].selectedIndex;
-            var tankID = this.elements["tankId"].selectedIndex;
-            var inc_Exp = this.elements["inc_exp"].value;
-            var date = this.elements["date"].value;
+            var operationID = document.getElementById("operationId").value;
+            var form = document.forms["operationForm"];
+            var fuelID = form.elements["fuelId"].selectedIndex;
+            var tankID = form.elements["tankId"].selectedIndex;
+            var inc_Exp = document.getElementById("inc_exp").value;
+            var date = document.getElementById("date").value;
             if (operationID == 0)
-                await Createoperation(fuelID, tankID, inc_Exp, date);
+                Createoperation(fuelID, tankID, inc_Exp, date);
             else
-                await Editoperation(operationID, fuelID, tankID, inc_Exp, date);
+                Editoperation(operationID, fuelID, tankID, inc_Exp, date);
         });
 
         // загрузка данных для таблицы и ее формирование

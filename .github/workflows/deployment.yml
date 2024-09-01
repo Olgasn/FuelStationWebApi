@@ -30,4 +30,4 @@ jobs:
       name: gh-pages publish
       with:
         branch: gh-pages
-        folder: ./FuelStationBlazor/Client/bin/release/net8.0/publish/wwwroot
+        folder: ./FuelStationWebApi/bin/release/net8.0/publish/wwwroot

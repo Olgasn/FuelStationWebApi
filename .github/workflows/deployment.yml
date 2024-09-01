@@ -1,0 +1,33 @@
+name: Deployment
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  deployment:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup .NET 8
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0'
+        include-prerelease: true
+        
+    - name: publish
+      run: |
+        cd FuelStationWebApi
+        dotnet publish -c release
+      
+      
+    - name: Add .nojekyll file
+      run: touch ./FuelStationWebApi/bin/release/net8.0/publish/wwwroot/.nojekyll
+      
+    - uses: JamesIves/github-pages-deploy-action@v4
+      name: gh-pages publish
+      with:
+        branch: gh-pages
+        folder: ./FuelStationBlazor/Client/bin/release/net8.0/publish/wwwroot

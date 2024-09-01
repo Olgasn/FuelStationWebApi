@@ -31,17 +31,34 @@ namespace FuelStationWebApi
             var services = builder.Services;
 
             //Sqlite
-            string connectionDB = builder.Configuration.GetConnectionString("FuelSqlite");
+            string connectionString = builder.Configuration.GetConnectionString("FuelSqlite");
             services.AddDbContext<FuelsContext>(options =>
-                options.UseSqlite(connectionDB));
+                options.UseSqlite(connectionString));
+
             //SQL Server
-            //connectionDB = builder.Configuration.GetConnectionString("FuelConnectionSQL");
+            //connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
+            ////Вариант строки подключения к экземпляру удаленного SQL Server, требующего имя пользователя и пароль
+            //// создаем конфигурацию для считывания секретной информации
+            //IConfigurationRoot configuration = builder.Configuration.AddUserSecrets<Program>().Build();
+            //connectionString = configuration.GetConnectionString("RemoteSQLConnection");
+            ////Считываем пароль и имя пользователя из secrets.json
+            //string secretPass = configuration["Database:password"];
+            //string secretUser = configuration["Database:login"];
+            //SqlConnectionStringBuilder sqlConnectionStringBuilder = new(connectionString)
+            //{
+            //    Password = secretPass,
+            //    UserID = secretUser
+            //};
+            //connectionString = sqlConnectionStringBuilder.ConnectionString;
+
             //services.AddDbContext<FuelsContext>(options =>
-            //    options.UseSqlServer(connectionDB));
+            //    options.UseSqlServer(connectionString));
+
             //MySQL
-            //connectionDB = builder.Configuration.GetConnectionString("FuelConnectionMysql");
+            //connectionString = builder.Configuration.GetConnectionString("FuelConnectionMysql");
             //services.AddDbContext<FuelsContext>(options =>
-            //    options.UseMySQL(Configuration.GetConnectionString("connectionDB")));
+            //    options.UseMySQL(connectionString));
 
             // Add framework services.
             services.AddControllers();

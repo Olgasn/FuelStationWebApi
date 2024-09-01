@@ -5,17 +5,15 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace FuelStationWebApi.Controllers
 {
     [Route("api/[controller]")]
-    public class OperationsController : Controller
+    public class OperationsController(FuelsContext context) : Controller
     {
-        private readonly FuelsContext _context;
-        public OperationsController(FuelsContext context)
-        {
-            _context = context;
-        }
+        private readonly FuelsContext _context = context;
+
         /// <summary>
         /// Получение списка всех операций
         /// </summary>
@@ -36,7 +34,7 @@ namespace FuelStationWebApi.Controllers
                     Date = o.Date
 
                 });
-            return ovm.ToList();
+            return [.. ovm];
         }
         /// <summary>
         /// Получение списка операций, удовлетворяющих заданному условию
@@ -74,7 +72,7 @@ namespace FuelStationWebApi.Controllers
                 ovm = ovm.Where(op => op.FuelID == FuelID);
 
             }
-            return ovm.ToList();
+            return [.. ovm];
         }
 
 

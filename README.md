@@ -9,3 +9,6 @@
 
 
 с использованием Fetch API: http://host:xxxx/fetch_operations.html
+
+
+[![build and test](https://github.com/Olgasn/FuelStationWebApi/actions/workflows/deployment.yml/badge.svg)](https://github.com/Olgasn/FuelStationWebApi/actions/workflows/deployment.yml)

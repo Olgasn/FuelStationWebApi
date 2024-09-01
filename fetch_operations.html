@@ -1,0 +1,343 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>Операции</title>
+    <link href="lib/bootstrap/css/bootstrap.css" rel="stylesheet" />
+    <script src="lib/jquery/dist/jquery.js"></script>
+    <link href="lib/jquery-ui/themes/base/jquery-ui.min.css" rel="stylesheet" />
+    <script src="lib/jquery-ui/jquery-ui.js"></script>
+    <script src="lib/jquery-ui/ui/i18n/datepicker-ru.js"></script>
+    <script>
+        $(function () {
+            //ввод даты с использованием специального окна
+            $("#date").datepicker({ dateFormat: "yy-mm-dd" });
+        });
+    </script>
+
+</head>
+<body onload="">
+    <div class="container">
+        <h2>Список операций</h2>
+        <form name="operationForm">
+            <table border="0">
+                <tr>
+                    <td>
+                        <label for="operationId" id="typeCRUD" name="typeCRUD">Добавить:</label>
+                        <input type="hidden" id="operationId" name="operationId" value=0 />
+                        <div class="form-group">
+                            <label Добавить>Топливо:</label>
+                            <select id="fuelId" name="fuelId"></select>
+                        </div>
+                        <div class="form-group">
+                            <label for="tankType">Емкость:</label>
+                            <select id="tankId" name="tankId"></select>
+                        </div>
+                    </td>
+                    <td>
+                        <a id="filter" class="btn btn-sm btn-primary">Загрузить</a>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2">
+                        <div class="form-group">
+                            <label for="inc_exp">Приход-расход:</label>
+                            <input class="form-control" name="inc_exp" id="inc_exp" />
+                        </div>
+                        <div class="form-group">
+                            <label for="date">Дата:</label>
+                            <input class="form-control" name="date" id="date" />
+                        </div>
+                        <div class="panel-body">
+                            <button id="saveBtn" type="submit" class="btn btn-sm btn-primary">Сохранить</button>
+                            <a id="reset" class="btn btn-sm btn-primary">Сбросить</a>
+
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        </form>
+
+
+        <table class="table table-condensed table-striped table-bordered">
+            <thead><tr><th>Код</th><th>Топливо</th><th>Емкость</th><th>Приход-расход</th><th>Дата</th><th>Действие</th><th>Действие</th></tr></thead>
+            <tbody id="data"></tbody>
+        </table>
+    </div>
+    
+    <script>
+
+        // Получение всех операций
+        async function Getoperations() {
+            // отправляет запрос и получаем ответ
+            const response = await fetch("/api/operations", {
+                method: "GET",
+                headers: { "Accept": "application/json" }
+            });
+            // если запрос прошел нормально
+            if (response.ok === true) {
+                // получаем данные
+                const operations = await response.json();
+                const rows = document.querySelector("table tbody#data");
+                // добавляем полученные элементы в таблицу
+                operations.forEach(operation => rows.append(row(operation)));
+            }
+
+        }
+
+        // Получение фильтрованных операций
+        async function GetFilteredOperations() {
+            var form = document.forms["operationForm"];
+            var fuelID = form.elements["fuelId"].selectedIndex;
+            var tankID = form.elements["tankId"].selectedIndex;
+
+            // отправляет запрос и получаем ответ
+            const response = await fetch('/api/operations/filteredoperations?TankID=' + tankID + '&FuelID=' + fuelID, {
+                method: "GET",
+                headers: { "Accept": "application/json" }
+            });
+            // если запрос прошел нормально
+            if (response.ok === true) {
+                // получаем данные
+                const operations = await response.json();
+                document.getElementById("data").innerHTML = "";
+                const rows = document.querySelector("table tbody#data");
+                // добавляем полученные элементы в таблицу
+                operations.forEach(operation => rows.append(row(operation)));
+            }
+        }
+        // Получение одной операции
+        async function Getoperation(id) {
+            // отправляет запрос и получаем ответ
+            const response = await fetch('/api/operations/'+id, {
+                method: "GET",
+                headers: { "Accept": "application/json" }
+            });
+            // если запрос прошел нормально
+            if (response.ok === true) {
+                // получаем данные
+                const operation = await response.json();
+                var form = document.forms["operationForm"];
+                form.elements["operationId"].value = operation.operationID;
+                form.elements["fuelId"].selectedIndex = operation.fuelID;
+                form.elements["tankId"].selectedIndex = operation.tankID;
+                form.elements["inc_exp"].value = operation.inc_Exp;
+                form.elements["date"].value = operation.date.substring(0, 10);
+            }
+        }
+        // Добавление операции
+        async function Createoperation(fuelId, tankId, inc_Exp, date) {
+            const response = await fetch("api/operations", {
+                method: "POST",
+                headers: { "Accept": "application/json", "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    fuelId: fuelId,
+                    tankId: tankId,
+                    inc_Exp: parseFloat(inc_Exp),
+                    date: date
+                })
+            });
+            if (response.ok === true) {
+                const operation = await response.json();
+                reset();
+                var form = document.forms["operationForm"];
+                operation.tankType = form.elements["tankId"].options[tankId].text;
+                operation.fuelType = form.elements["fuelId"].options[fuelId].text;
+                document.querySelector("table tbody#data").append(row(operation));
+            }
+            else {
+                const error = await response.json();
+                console.log(error.message);
+            }
+        }
+        // Изменение операции
+        async function Editoperation(operationID, fuelId, tankId, inc_Exp, date) {
+            const response = await fetch("api/operations", {
+                method: "PUT",
+                headers: { "Accept": "application/json", "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    operationID: parseInt(operationID),
+                    fuelId: fuelId,
+                    tankId: tankId,
+                    inc_Exp: parseFloat(inc_Exp),
+                    date: date
+                })
+            });
+            if (response.ok === true) {
+                reset();
+                const operation = await response.json();
+                var form = document.forms["operationForm"];
+                operation.tankType = form.elements["tankId"].options[tankId].text;
+                operation.fuelType = form.elements["fuelId"].options[fuelId].text;
+                document.querySelector("tr[data-rowid='" + operation.operationID + "']").replaceWith(row(operation));
+            }
+            else {
+                const error = await response.json();
+                console.log(error.message);
+            }
+        }
+
+        // сброс формы
+        function reset() {
+            var form = document.forms["operationForm"];
+            form.reset();
+            form.elements["operationId"].value = 0;
+            document.getElementById("typeCRUD").innerHTML = "Добавить:";
+        }
+
+        // Удаление операции
+        async function Deleteoperation(id) {
+            const response = await fetch("api/operations/" + id, {
+                method: "DELETE",
+                headers: { "Accept": "application/json" }
+            });
+            if (response.ok === true) {
+                const operation = await response.json();
+                document.querySelector("tr[data-rowid='" + operation.operationID + "']").remove();
+            }
+            else {
+                const error = await response.json();
+                console.log(error.message);
+            }
+        }
+
+        // нажатие на ссылку Изменить
+        async function Edit(id) {
+            document.getElementById("typeCRUD").innerHTML = "Изменить:";
+            await Getoperation(id);
+        }
+
+        // нажатие на ссылку Удалить
+        async function Delete(id) {
+            await Deleteoperation(id);
+            reset();
+        }
+
+        // создание строки для таблицы
+        function row(operation) {
+
+            const tr = document.createElement("tr");
+            tr.setAttribute("data-rowid", operation.operationID);
+
+            const IDTd = document.createElement("td");
+            IDTd.append(operation.operationID);
+            tr.append(IDTd);
+
+            const fuelTypeTd = document.createElement("td");
+            fuelTypeTd.append(operation.fuelType);
+            tr.append(fuelTypeTd);
+
+            const tankTypeTd = document.createElement("td");
+            tankTypeTd.append(operation.tankType);
+            tr.append(tankTypeTd);
+
+            const inc_ExpTd = document.createElement("td");
+            inc_ExpTd.append(operation.inc_Exp);
+            tr.append(inc_ExpTd);
+
+            const dateTd = document.createElement("td");
+            dateTd.append(operation.date.substring(0, 10));
+            tr.append(dateTd);
+
+            const link1Td = document.createElement("td");
+            const editLink = document.createElement("a");
+            editLink.setAttribute("class", "editLink");
+            editLink.setAttribute("data-id", operation.operationID)
+            editLink.append("Изменить");
+            editLink.addEventListener("click", async () => await Edit(operation.operationID));
+            link1Td.append(editLink);
+            tr.appendChild(link1Td);
+
+            const link2Td = document.createElement("td");
+            const removeLink = document.createElement("a");
+            removeLink.setAttribute("class", "removeLink");
+            removeLink.setAttribute("data-id", operation.operationID)
+            removeLink.append("Удалить");
+            removeLink.addEventListener("click", async () => await Delete(operation.operationID));
+            link2Td.append(removeLink);
+            tr.appendChild(link2Td);
+
+            return tr;
+        }
+
+        // Получение списка видов топлива
+        async function GetFuels() {
+            var listItems = "";
+            // отправляет запрос и получаем ответ
+            const response = await fetch('/api/operations/fuels', {
+                method: "GET",
+                headers: { "Accept": "application/json" }
+            });
+            // если запрос прошел нормально
+            if (response.ok === true) {
+                // получаем данные
+                const fuels = await response.json();
+                listItems += "<option value=0 selected>(выбор)</option>";
+                fuels.forEach(function (fuel) {
+                    listItems += "<option value='" + fuel.fuelId + "'>" + fuel.fuelType + "</option>";
+                });
+                document.getElementById("fuelId").innerHTML = listItems;
+            }
+        }
+
+        // Получение списка емкостей
+        async function GetTanks() {
+            var listItems = "";
+            // отправляет запрос и получаем ответ
+            const response = await fetch('/api/operations/tanks', {
+                method: "GET",
+                headers: { "Accept": "application/json" }
+            });
+            // если запрос прошел нормально
+            if (response.ok === true) {
+                // получаем данные
+                const tanks = await response.json();
+                listItems += "<option value=0 selected>(выбор)</option>";
+                tanks.forEach(function (tank) {
+                    listItems +="<option value='" + tank.tankId + "'>" + tank.tankType + "</option>";
+                });
+                document.getElementById("tankId").innerHTML = listItems;
+            }
+
+        }
+
+
+        // Обработка документа
+
+
+        // сброс значений формы
+        document.getElementById("reset").addEventListener("click", () => reset());
+
+        // фильтрация
+        document.getElementById("filter").addEventListener("click", () => GetFilteredOperations());
+
+        // отправка формы
+        document.getElementById("saveBtn").addEventListener("click", async function (e)
+        {
+            e.preventDefault();
+            var operationID = document.getElementById("operationId").value;
+            var form = document.forms["operationForm"];
+            var fuelID = form.elements["fuelId"].selectedIndex;
+            var tankID = form.elements["tankId"].selectedIndex;
+            var inc_Exp = document.getElementById("inc_exp").value;
+            var date = document.getElementById("date").value;
+            if (operationID == 0)
+                Createoperation(fuelID, tankID, inc_Exp, date);
+            else
+                Editoperation(operationID, fuelID, tankID, inc_Exp, date);
+        });
+
+        // загрузка данных для таблицы и ее формирование
+        Getoperations();
+        // загрузка данных для списка видов топлива и его формирование
+        GetFuels();
+        // загрузка данных для списка емкостей и его формирование
+        GetTanks();
+
+
+
+    </script>
+</body>
+
+</html>

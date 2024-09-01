@@ -1,0 +1,284 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>Операции</title>
+    <link href="lib/bootstrap/css/bootstrap.css" rel="stylesheet" />
+    <script src="lib/jquery/dist/jquery.js"></script>
+    <link href="lib/jquery-ui/themes/base/jquery-ui.min.css" rel="stylesheet" />
+    <script src="lib/jquery-ui/jquery-ui.js"></script>
+    <script src="lib/jquery-ui/ui/i18n/datepicker-ru.js"></script>
+ 
+</head>
+<body>
+    <div class="container">
+        <h2>Список операций</h2>
+        <form name="operationForm">
+            <table border="0">
+                <tr>
+                    <td>
+                        <label for="operationId" id="typeCRUD" name="typeCRUD">Добавить:</label>
+                        <input type="hidden" id="operationId" name="operationId" value=0 />
+                        <div class="form-group">
+                            <label Добавить>Топливо:</label>
+                            <select id="fuelId" name="fuelId"></select>
+                        </div>
+                        <div class="form-group">
+                            <label for="tankType">Емкость:</label>
+                            <select id="tankId" name="tankId"></select>
+                        </div>
+                    </td>
+                    <td>
+                        <a id="filter" class="btn btn-sm btn-primary">Загрузить</a>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2">
+                        <div class="form-group">
+                            <label for="inc_exp">Приход-расход:</label>
+                            <input class="form-control" name="inc_exp" id="inc_exp" />
+                        </div>
+                        <div class="form-group">
+                            <label for="date">Дата:</label>
+                            <input class="form-control" name="date" id="date" />
+                        </div>
+                        <div class="panel-body">
+                            <button type="submit" class="btn btn-sm btn-primary">Сохранить</button>
+                            <a id="reset" class="btn btn-sm btn-primary">Сбросить</a>
+
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        </form>
+
+
+        <table class="table table-condensed table-striped table-bordered">
+            <thead><tr><th>Код</th><th>Топливо</th><th>Емкость</th><th>Приход-расход</th><th>Дата</th><th>Действие</th></tr></thead>
+            <tbody id="data"></tbody>
+        </table>
+    </div>
+    
+    <script>
+
+        // Получение всех операций
+        function Getoperations() {
+            $.ajax({
+                url: '/api/operations',
+                type: 'GET',
+                contentType: "application/json",
+                success: function (operations) {
+                    var rows = "";
+                    $.each(operations, function (index, operation) {
+                        // добавляем полученные элементы в таблицу
+                        rows += row(operation);
+                    })
+                    $("table tbody#data").append(rows);
+                 }
+            });
+        }
+
+        // Получение фильтрованных операций
+        function GetFilteredOperations() {
+            var form = document.forms["operationForm"];
+            var fuelID = form.elements["fuelId"].selectedIndex;
+            var tankID = form.elements["tankId"].selectedIndex;
+            $.ajax({
+                url: '/api/operations/filteredoperations?TankID=' + tankID + '&FuelID=' + fuelID,
+                type: 'GET',
+                contentType: "application/json",
+                success: function (operations) {
+                    var rows = "";
+                    $("table tbody#data").html("");
+                    $.each(operations, function (index, operation) {
+                        // добавляем полученные элементы в таблицу
+                        rows += row(operation);
+                    })
+                    $("table tbody#data").append(rows);
+                }
+            });
+        }
+        // Получение одной операции
+        function Getoperation(id) {
+            $.ajax({
+                url: '/api/operations/'+id,
+                type: 'GET',
+                contentType: "application/json",
+                success: function (operation) {
+                    var form = document.forms["operationForm"];
+                    form.elements["operationId"].value = operation.operationID;
+                    form.elements["fuelId"].selectedIndex = operation.fuelID;
+                    form.elements["tankId"].selectedIndex = operation.tankID;
+                    form.elements["inc_exp"].value = operation.inc_Exp;
+                    form.elements["date"].value = operation.date.substring(0, 10);
+                }
+            });
+        }
+        // Добавление операции
+        function Createoperation(fuelId, tankId, inc_Exp, date) {
+            $.ajax({
+                url: "api/operations",
+                contentType: "application/json",
+                method: "POST",
+                data: JSON.stringify({
+                    fuelId: fuelId,
+                    tankId: tankId,
+                    inc_Exp: parseFloat(inc_Exp),
+                    date: date
+                }),
+                success: function (operation) {
+                    reset();
+                    var form = document.forms["operationForm"];
+                    operation.tankType = form.elements["tankId"].options[tankId].text;
+                    operation.fuelType = form.elements["fuelId"].options[fuelId].text;
+                    $("table tbody#data").append(row(operation));
+                }
+            })
+        }
+        // Изменение операции
+        function Editoperation(operationID, fuelId, tankId, inc_Exp, date) {
+            $.ajax({
+                url: "api/operations",
+                contentType: "application/json",
+                method: "PUT",
+                data: JSON.stringify({
+                    operationID: parseInt(operationID),
+                    fuelId: fuelId,
+                    tankId: tankId,
+                    inc_Exp: parseFloat(inc_Exp),
+                    date: date
+                }),
+                success: function (operation) {
+                    reset();
+                    var form = document.forms["operationForm"];
+                    operation.tankType = form.elements["tankId"].options[tankId].text;
+                    operation.fuelType = form.elements["fuelId"].options[fuelId].text;
+                    $("tr[data-rowid='" + operation.operationID + "']").replaceWith(row(operation));
+                }
+            })
+        }
+
+        // сброс формы
+        function reset() {
+            var form = document.forms["operationForm"];
+            form.reset();
+            form.elements["operationId"].value = 0;
+            $("#typeCRUD").html("Добавить:");
+        }
+
+        // Удаление операции
+        function Deleteoperation(id) {
+            $.ajax({
+                url: "api/operations/" + id,
+                contentType: "application/json",
+                method: "DELETE",
+                success: function (operation) {
+                    $("tr[data-rowid='" + operation.operationID + "']").remove();
+                }
+            })
+        }
+        // создание строки для таблицы
+        var row = function (operation) {
+            return "<tr data-rowid='" + operation.operationID + "'><td>" + operation.operationID + "</td>" +
+                "<td>" + operation.fuelType + "</td>" +
+                "<td>" + operation.tankType + "</td>" +
+                "<td>" + operation.inc_Exp + "</td>" +
+                "<td>" + operation.date.substring(0,10) + "</td>" +
+                "<td><a class='editLink' data-id='" + operation.operationID + "'>Изменить</a> | " +
+                "<a class='removeLink' data-id='" + operation.operationID + "'>Удалить</a></td></tr>";
+        }
+
+        // Получение списка видов топлива
+        function GetFuels() {
+            var listItems = "";
+            $.ajax({
+                url: '/api/operations/fuels',
+                type: 'GET',
+                contentType: "application/json",
+                success: function (fuels) {
+                    listItems += "<option value=0 selected>(выбор)</option>";
+                    $.each(fuels, function (index, fuel) {
+                        listItems +="<option value='" + fuel.fuelId + "'>" + fuel.fuelType + "</option>";
+                    });
+                    $("#fuelId").html(listItems);
+                }
+            });
+        }
+
+        // Получение списка емкостей
+        function GetTanks() {
+            var listItems = "";
+            $.ajax({
+                url: '/api/operations/tanks',
+                type: 'GET',
+                contentType: "application/json",
+                success: function (tanks) {
+                    listItems += "<option value=0 selected>(выбор)</option>";
+                    $.each(tanks, function (index, tank) {
+                        listItems += "<option value='" + tank.tankId + "'>" + tank.tankType + "</option>";
+                    });
+                    $("#tankId").html(listItems);
+                }
+            });
+        }
+
+
+        // Обработка документа
+
+        // сброс значений формы
+        $("#reset").click(function (e) {
+            e.preventDefault();
+            reset();
+        })
+
+
+        // фильтрация
+        $("#filter").click(function (e) {
+            GetFilteredOperations();            
+        })
+
+        // отправка формы
+        $("form").submit(function (e) {
+            e.preventDefault();
+            var operationID = this.elements["operationId"].value;
+            var fuelID = this.elements["fuelId"].selectedIndex;
+            var tankID = this.elements["tankId"].selectedIndex;
+            var inc_Exp = this.elements["inc_exp"].value;
+            var date = this.elements["date"].value;
+            if (operationID == 0)
+                Createoperation(fuelID, tankID, inc_Exp, date);
+            else
+                Editoperation(operationID, fuelID, tankID, inc_Exp, date);
+        });
+
+        // нажатие на ссылку Изменить
+        $("body").on("click", ".editLink", function () {
+            var id = $(this).data("id");
+            $("#typeCRUD").html("Изменить:");
+            Getoperation(id);
+        })
+
+        // нажатие на ссылку Удалить
+        $("body").on("click", ".removeLink", function () {
+            var id = $(this).data("id");
+            Deleteoperation(id);
+            reset();
+        })
+
+        // загрузка данных для таблицы и ее формирование
+        Getoperations();
+        // загрузка данных для списка видов топлива и его формирование
+        GetFuels();
+        // загрузка данных для списка емкостей и его формирование
+        GetTanks();
+
+        //ввод даты с использованием специального окна
+        $(document).ready(function () {
+               $("#date").datepicker({ dateFormat: "yy-mm-dd" });
+        });
+
+    </script>
+</body>
+
+</html>

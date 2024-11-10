@@ -12,6 +12,7 @@
  
 </head>
 <body>
+    <a href="index.html" class="btn btn-sm btn-primary">Войти</a>
     <div class="container">
         <h2>Список операций</h2>
         <form name="operationForm">
@@ -59,7 +60,7 @@
             <tbody id="data"></tbody>
         </table>
     </div>
-    
+
     <script>
 
         // Получение всех операций
@@ -68,6 +69,9 @@
                 url: '/api/operations',
                 type: 'GET',
                 contentType: "application/json",
+                headers: {
+                    "Authorization": "Bearer " + token 
+                },
                 success: function (operations) {
                     var rows = "";
                     $.each(operations, function (index, operation) {
@@ -75,7 +79,7 @@
                         rows += row(operation);
                     })
                     $("table tbody#data").append(rows);
-                 }
+                }
             });
         }
 
@@ -88,6 +92,9 @@
                 url: '/api/operations/filteredoperations?TankID=' + tankID + '&FuelID=' + fuelID,
                 type: 'GET',
                 contentType: "application/json",
+                headers: {
+                    "Authorization": "Bearer " + token
+                },
                 success: function (operations) {
                     var rows = "";
                     $("table tbody#data").html("");
@@ -102,9 +109,12 @@
         // Получение одной операции
         function Getoperation(id) {
             $.ajax({
-                url: '/api/operations/'+id,
+                url: '/api/operations/' + id,
                 type: 'GET',
                 contentType: "application/json",
+                headers: {
+                    "Authorization": "Bearer " + token
+                },
                 success: function (operation) {
                     var form = document.forms["operationForm"];
                     form.elements["operationId"].value = operation.operationID;
@@ -127,6 +137,9 @@
                     inc_Exp: parseFloat(inc_Exp),
                     date: date
                 }),
+                headers: {
+                    "Authorization": "Bearer " + token
+                },
                 success: function (operation) {
                     reset();
                     var form = document.forms["operationForm"];
@@ -149,6 +162,9 @@
                     inc_Exp: parseFloat(inc_Exp),
                     date: date
                 }),
+                headers: {
+                    "Authorization": "Bearer " + token
+                },
                 success: function (operation) {
                     reset();
                     var form = document.forms["operationForm"];
@@ -173,6 +189,9 @@
                 url: "api/operations/" + id,
                 contentType: "application/json",
                 method: "DELETE",
+                headers: {
+                    "Authorization": "Bearer " + token
+                },
                 success: function (operation) {
                     $("tr[data-rowid='" + operation.operationID + "']").remove();
                 }
@@ -184,7 +203,7 @@
                 "<td>" + operation.fuelType + "</td>" +
                 "<td>" + operation.tankType + "</td>" +
                 "<td>" + operation.inc_Exp + "</td>" +
-                "<td>" + operation.date.substring(0,10) + "</td>" +
+                "<td>" + operation.date.substring(0, 10) + "</td>" +
                 "<td><a class='editLink' data-id='" + operation.operationID + "'>Изменить</a> | " +
                 "<a class='removeLink' data-id='" + operation.operationID + "'>Удалить</a></td></tr>";
         }
@@ -196,10 +215,13 @@
                 url: '/api/operations/fuels',
                 type: 'GET',
                 contentType: "application/json",
+                headers: {
+                    "Authorization": "Bearer " + token
+                },
                 success: function (fuels) {
                     listItems += "<option value=0 selected>(выбор)</option>";
                     $.each(fuels, function (index, fuel) {
-                        listItems +="<option value='" + fuel.fuelId + "'>" + fuel.fuelType + "</option>";
+                        listItems += "<option value='" + fuel.fuelId + "'>" + fuel.fuelType + "</option>";
                     });
                     $("#fuelId").html(listItems);
                 }
@@ -213,6 +235,9 @@
                 url: '/api/operations/tanks',
                 type: 'GET',
                 contentType: "application/json",
+                headers: {
+                    "Authorization": "Bearer " + token
+                },
                 success: function (tanks) {
                     listItems += "<option value=0 selected>(выбор)</option>";
                     $.each(tanks, function (index, tank) {
@@ -226,6 +251,11 @@
 
         // Обработка документа
 
+
+        // получаем токен из sessionStorage
+        var tokenKey = "accessToken";
+        const token = sessionStorage.getItem(tokenKey);
+
         // сброс значений формы
         $("#reset").click(function (e) {
             e.preventDefault();
@@ -235,7 +265,7 @@
 
         // фильтрация
         $("#filter").click(function (e) {
-            GetFilteredOperations();            
+            GetFilteredOperations();
         })
 
         // отправка формы
@@ -275,7 +305,7 @@
 
         //ввод даты с использованием специального окна
         $(document).ready(function () {
-               $("#date").datepicker({ dateFormat: "yy-mm-dd" });
+            $("#date").datepicker({ dateFormat: "yy-mm-dd" });
         });
 
     </script>

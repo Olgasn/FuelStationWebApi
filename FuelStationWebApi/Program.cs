@@ -1,16 +1,22 @@
 ﻿using FuelStationWebApi.Data;
+using FuelStationWebApi.Middleware;
+using FuelStationWebApi.Models;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Serilog;
 using Serilog.Events;
 using System;
 using System.IO;
 using System.Reflection;
+using System.Text;
 
 namespace FuelStationWebApi
 {
@@ -27,13 +33,16 @@ namespace FuelStationWebApi
 
 
             WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
-
+            var configuration = builder.Configuration;
             var services = builder.Services;
 
             //Sqlite
             string connectionString = builder.Configuration.GetConnectionString("FuelSqlite");
             services.AddDbContext<FuelsContext>(options =>
                 options.UseSqlite(connectionString));
+
+
+
 
             //SQL Server
             //connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
@@ -59,6 +68,44 @@ namespace FuelStationWebApi
             //connectionString = builder.Configuration.GetConnectionString("FuelConnectionMysql");
             //services.AddDbContext<FuelsContext>(options =>
             //    options.UseMySQL(connectionString));
+
+
+
+            string connectionUsersString = configuration.GetConnectionString("IdentityConnection");
+            services.AddDbContext<ApplicationDbContext>(options => options.UseSqlite(connectionUsersString));
+            services.AddIdentity<IdentityUser, IdentityRole>(options =>
+            {
+                options.User.RequireUniqueEmail = false;
+            })
+            .AddEntityFrameworkStores<ApplicationDbContext>()
+            .AddDefaultTokenProviders();
+
+
+
+            // Настройка JWT аутентификации
+            var jwtSettings = configuration.GetSection("JwtSettings");
+            var key = Encoding.UTF8.GetBytes(jwtSettings["SecretKey"]);
+
+            builder.Services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
+            .AddJwtBearer(options =>
+            {
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+                    ValidIssuer = jwtSettings["Issuer"],
+                    ValidAudience = jwtSettings["Audience"],
+                    IssuerSigningKey = new SymmetricSecurityKey(key)
+                };
+            });
+
+
 
             // Add framework services.
             services.AddControllers();
@@ -99,20 +146,8 @@ namespace FuelStationWebApi
             app.UseDefaultFiles();
             app.UseStaticFiles();
 
-            //Инициализация базы данных
-            using (var scope = app.Services.CreateScope())
-            {
-                var serviceProvider = scope.ServiceProvider;
-                try
-                {
-                    FuelsContext context = serviceProvider.GetRequiredService<FuelsContext>();
-                    DbInitializer.Initialize(context);
-                }
-                catch (Exception exception)
-                {
-                    Log.Fatal(exception, "An error occurred while db initialization");
-                }
-            }
+            //Инициализация баз данных
+            app.UseDbInitializer();
 
             if (!app.Environment.IsDevelopment())
             {

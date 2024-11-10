@@ -1,6 +1,7 @@
 ﻿using FuelStationWebApi.Models;
 using System;
 using System.Linq;
+
 //Класс для инициализации базы данных путем заполнения ее таблиц тестовым набором записей
 namespace FuelStationWebApi.Data
 {

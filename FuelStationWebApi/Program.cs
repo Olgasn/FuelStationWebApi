@@ -1,6 +1,7 @@
 ﻿using FuelStationWebApi.Data;
 using FuelStationWebApi.Middleware;
 using FuelStationWebApi.Models;
+using FuelStationWebApi.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -40,10 +41,6 @@ namespace FuelStationWebApi
             string connectionString = builder.Configuration.GetConnectionString("FuelSqlite");
             services.AddDbContext<FuelsContext>(options =>
                 options.UseSqlite(connectionString));
-
-
-
-
             //SQL Server
             //connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
@@ -60,7 +57,6 @@ namespace FuelStationWebApi
             //    UserID = secretUser
             //};
             //connectionString = sqlConnectionStringBuilder.ConnectionString;
-
             //services.AddDbContext<FuelsContext>(options =>
             //    options.UseSqlServer(connectionString));
 
@@ -70,7 +66,7 @@ namespace FuelStationWebApi
             //    options.UseMySQL(connectionString));
 
 
-
+            // Подключение Identity для хранения данных пользователей
             string connectionUsersString = configuration.GetConnectionString("IdentityConnection");
             services.AddDbContext<ApplicationDbContext>(options => options.UseSqlite(connectionUsersString));
             services.AddIdentity<IdentityUser, IdentityRole>(options =>
@@ -93,6 +89,8 @@ namespace FuelStationWebApi
             })
             .AddJwtBearer(options =>
             {
+                options.RequireHttpsMetadata = false;
+                options.SaveToken = true;
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
                     ValidateIssuer = true,
@@ -105,11 +103,14 @@ namespace FuelStationWebApi
                 };
             });
 
-
+            builder.Services.AddTransient<AuthService>();
 
             // Add framework services.
             services.AddControllers();
-            // Register the Swagger generator, defining 1 or more Swagger documents
+
+
+
+            // Register the Swagger generator
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo
@@ -117,7 +118,6 @@ namespace FuelStationWebApi
                     Version = "v1",
                     Title = "FuelStation API",
                     Description = "Данные об операциях на топливной базе",
-                    //TermsOfService = new Uri("https://go.microsoft.com/fwlink/?LinkID=206977"),
                     Contact = new OpenApiContact
                     {
                         Name = "Asenchik Oleg",
@@ -126,13 +126,38 @@ namespace FuelStationWebApi
                     }
                 });
 
+                var securityScheme = new OpenApiSecurityScheme
+                {
+                    Name = "JWT Authentication",
+                    Description = "Enter your JWT token in this field",
+                    In = ParameterLocation.Header,
+                    Type = SecuritySchemeType.Http,
+                    Scheme = "bearer",
+                    BearerFormat = "JWT"
+                };
+
+                c.AddSecurityDefinition("Bearer", securityScheme);
+
+                var securityRequirement = new OpenApiSecurityRequirement
+                {
+                    {
+                        new OpenApiSecurityScheme
+                        {
+                            Reference = new OpenApiReference
+                            {
+                                Type = ReferenceType.SecurityScheme,
+                                Id = "Bearer"
+                            }
+                        },
+                        Array.Empty<string>()
+                    }
+                };
+                c.AddSecurityRequirement(securityRequirement);
                 // Set the comments path for the Swagger JSON and UI.
                 var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
                 var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
                 c.IncludeXmlComments(xmlPath);
             });
-
-
 
 
             var app = builder.Build();

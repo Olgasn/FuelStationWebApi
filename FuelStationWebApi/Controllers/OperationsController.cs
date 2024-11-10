@@ -24,7 +24,6 @@ namespace FuelStationWebApi.Controllers
         [Produces("application/json")]
         public List<OperationViewModel> Get()
         {
-            var token = Request.Headers.Authorization.ToString;
             IQueryable<OperationViewModel> ovm = _context.Operations.Include(t => t.Tank).Include(f => f.Fuel)
                 .Select(o => new OperationViewModel
                 {

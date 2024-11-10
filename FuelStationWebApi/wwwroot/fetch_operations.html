@@ -18,8 +18,10 @@
 
 </head>
 <body onload="">
+    <a href="index.html" class="btn btn-sm btn-primary">Войти</a>
     <div class="container">
         <h2>Список операций</h2>
+
         <form name="operationForm">
             <table border="0">
                 <tr>
@@ -65,7 +67,7 @@
             <tbody id="data"></tbody>
         </table>
     </div>
-    
+
     <script>
 
         // Получение всех операций
@@ -73,7 +75,10 @@
             // отправляет запрос и получаем ответ
             const response = await fetch("/api/operations", {
                 method: "GET",
-                headers: { "Accept": "application/json" }
+                headers: {
+                    "Accept": "application/json",
+                    "Authorization": "Bearer " + token
+                }
             });
             // если запрос прошел нормально
             if (response.ok === true) {
@@ -95,7 +100,10 @@
             // отправляет запрос и получаем ответ
             const response = await fetch('/api/operations/filteredoperations?TankID=' + tankID + '&FuelID=' + fuelID, {
                 method: "GET",
-                headers: { "Accept": "application/json" }
+                headers: {
+                    "Accept": "application/json",
+                    "Authorization": "Bearer " + token
+                }
             });
             // если запрос прошел нормально
             if (response.ok === true) {
@@ -110,9 +118,12 @@
         // Получение одной операции
         async function Getoperation(id) {
             // отправляет запрос и получаем ответ
-            const response = await fetch('/api/operations/'+id, {
+            const response = await fetch('/api/operations/' + id, {
                 method: "GET",
-                headers: { "Accept": "application/json" }
+                headers: {
+                    "Accept": "application/json",
+                    "Authorization": "Bearer " + token
+                }
             });
             // если запрос прошел нормально
             if (response.ok === true) {
@@ -130,7 +141,11 @@
         async function Createoperation(fuelId, tankId, inc_Exp, date) {
             const response = await fetch("api/operations", {
                 method: "POST",
-                headers: { "Accept": "application/json", "Content-Type": "application/json" },
+                headers: {
+                    "Accept": "application/json",
+                    "Authorization": "Bearer " + token,
+                    "Content-Type": "application/json"
+                },
                 body: JSON.stringify({
                     fuelId: fuelId,
                     tankId: tankId,
@@ -155,7 +170,11 @@
         async function Editoperation(operationID, fuelId, tankId, inc_Exp, date) {
             const response = await fetch("api/operations", {
                 method: "PUT",
-                headers: { "Accept": "application/json", "Content-Type": "application/json" },
+                headers: {
+                    "Accept": "application/json",
+                    "Authorization": "Bearer " + token,
+                    "Content-Type": "application/json"
+                },
                 body: JSON.stringify({
                     operationID: parseInt(operationID),
                     fuelId: fuelId,
@@ -190,7 +209,11 @@
         async function Deleteoperation(id) {
             const response = await fetch("api/operations/" + id, {
                 method: "DELETE",
-                headers: { "Accept": "application/json" }
+                headers: {
+                    "Accept": "application/json",
+                    "Authorization": "Bearer " + token  // передача токена в заголовке
+
+                }
             });
             if (response.ok === true) {
                 const operation = await response.json();
@@ -267,7 +290,10 @@
             // отправляет запрос и получаем ответ
             const response = await fetch('/api/operations/fuels', {
                 method: "GET",
-                headers: { "Accept": "application/json" }
+                headers: {
+                    "Accept": "application/json",
+                    "Authorization": "Bearer " + token
+                }
             });
             // если запрос прошел нормально
             if (response.ok === true) {
@@ -287,7 +313,10 @@
             // отправляет запрос и получаем ответ
             const response = await fetch('/api/operations/tanks', {
                 method: "GET",
-                headers: { "Accept": "application/json" }
+                headers: {
+                    "Accept": "application/json",
+                    "Authorization": "Bearer " + token
+                }
             });
             // если запрос прошел нормально
             if (response.ok === true) {
@@ -295,7 +324,7 @@
                 const tanks = await response.json();
                 listItems += "<option value=0 selected>(выбор)</option>";
                 tanks.forEach(function (tank) {
-                    listItems +="<option value='" + tank.tankId + "'>" + tank.tankType + "</option>";
+                    listItems += "<option value='" + tank.tankId + "'>" + tank.tankType + "</option>";
                 });
                 document.getElementById("tankId").innerHTML = listItems;
             }
@@ -305,6 +334,9 @@
 
         // Обработка документа
 
+        // получаем токен из sessionStorage
+        var tokenKey = "accessToken";
+        const token = sessionStorage.getItem(tokenKey);
 
         // сброс значений формы
         document.getElementById("reset").addEventListener("click", () => reset());
@@ -313,8 +345,7 @@
         document.getElementById("filter").addEventListener("click", () => GetFilteredOperations());
 
         // отправка формы
-        document.getElementById("saveBtn").addEventListener("click", async function (e)
-        {
+        document.getElementById("saveBtn").addEventListener("click", async function (e) {
             e.preventDefault();
             var operationID = document.getElementById("operationId").value;
             var form = document.forms["operationForm"];

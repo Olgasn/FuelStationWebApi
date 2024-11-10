@@ -1,0 +1,105 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>Топливная станция</title>
+    <link href="lib/bootstrap/css/bootstrap.css" rel="stylesheet" />
+
+</head>
+<body>
+    <div class="container">
+        <h3>Вход на сайт</h3>
+        <div id="userInfo" style="display:none;">
+            <p>Добро пожаловать <span id="userName"></span>!</p>
+            <p>
+                <a id="fetch_operations" href="fetch_operations.html" class="btn btn-sm btn-primary">Операции (fetch)</a>
+            </p>
+            <p>
+                <a id="jq_operations" href="jq_operations.html" class="btn btn-sm btn-primary">Операции (jQuery)</a>
+
+            </p>
+            <input type="button" value="Выйти" id="logOut" />
+
+        </div>
+        <div id="loginForm">
+
+            <p>
+                <label>Введите email</label><br />
+                <input type="email" id="email" value="admin@gmail.com" />
+            </p>
+            <p>
+                <label>Введите пароль</label><br />
+                <input type="password" id="password" value="_Aa123456" />
+            </p>
+            <input type="submit" id="submitLogin" value="Логин" />
+        </div>
+        <p>
+            <a id="fetch_operations" href="fetch_operations.html" class="btn btn-sm btn-primary" style="display:none;">Операции (fetch)</a>
+        </p>
+        <p>
+            <a id="jq_operations" href="jq_operations.html" class="btn btn-sm btn-primary" style="display:none;">Операции (jQuery)</a>
+
+        </p>
+    </div>
+
+        <script>
+            var tokenKey = "accessToken";
+            // при нажатии на кнопку отправки формы идет запрос для получения токена
+            document.getElementById("submitLogin").addEventListener("click", async e => {
+                e.preventDefault();
+                // отправляет запрос и получаем ответ
+                const response = await fetch("/api/auth", {
+                    method: "POST",
+                    headers: { "Accept": "application/json", "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        email: document.getElementById("email").value,
+                        password: document.getElementById("password").value
+                    })
+                });
+                // если запрос прошел нормально
+                if (response.ok === true) {
+                    // получаем данные
+                    const data = await response.json();
+                    // изменяем содержимое и видимость блоков на странице
+                    document.getElementById("userInfo").style.display = "block";
+                    document.getElementById("userName").innerText = "вы вошли в систему " + getUsernameFromToken(data);
+                    document.getElementById("loginForm").style.display = "none";
+                    document.getElementById("fetch_operations").style.display = "inline";
+                    document.getElementById("jq_operations").style.display = "inline";
+                    // сохраняем в хранилище sessionStorage токен доступа
+                    sessionStorage.setItem(tokenKey, data);
+                }
+                else  // если произошла ошибка, получаем код статуса
+                    console.log("Status: ", response.status);
+            });
+
+
+            // условный выход - просто удаляем токен и меняем видимость блоков
+            document.getElementById("logOut").addEventListener("click", e => {
+
+                e.preventDefault();
+                document.getElementById("userName").innerText = "";
+                document.getElementById("loginForm").style.display = "block";
+                sessionStorage.removeItem(tokenKey);
+            });
+
+            function getUsernameFromToken(token) {
+                // Разделяем токен на части
+                const tokenParts = token.split('.');
+                if (tokenParts.length !== 3) {
+                    throw new Error('Неверный формат токена');
+                }
+
+                // Декодируем полезную нагрузку (payload) из base64
+                const payload = JSON.parse(atob(tokenParts[1]));
+
+                // Предполагаем, что имя пользователя хранится в свойстве `sub`
+                return payload.sub;
+            }
+
+        </script>
+
+
+</body>
+</html>

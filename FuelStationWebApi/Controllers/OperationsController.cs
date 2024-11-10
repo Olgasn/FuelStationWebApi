@@ -1,6 +1,7 @@
 ﻿using FuelStationWebApi.Data;
 using FuelStationWebApi.Models;
 using FuelStationWebApi.ViewModels;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
@@ -10,6 +11,7 @@ using System.Threading.Tasks;
 namespace FuelStationWebApi.Controllers
 {
     [Route("api/[controller]")]
+    [Authorize]
     public class OperationsController(FuelsContext context) : Controller
     {
         private readonly FuelsContext _context = context;
@@ -22,8 +24,9 @@ namespace FuelStationWebApi.Controllers
         [Produces("application/json")]
         public List<OperationViewModel> Get()
         {
-            IQueryable<OperationViewModel> ovm = _context.Operations.Include(t => t.Tank).Include(f => f.Fuel).Select(o =>
-                new OperationViewModel
+            var token = Request.Headers.Authorization.ToString;
+            IQueryable<OperationViewModel> ovm = _context.Operations.Include(t => t.Tank).Include(f => f.Fuel)
+                .Select(o => new OperationViewModel
                 {
                     OperationID = o.OperationID,
                     TankID = o.TankID,
@@ -50,8 +53,7 @@ namespace FuelStationWebApi.Controllers
         public List<OperationViewModel> GetFilteredOperations(int FuelID, int TankID)
         {
             IQueryable<OperationViewModel> ovm = _context.Operations.Include(t => t.Tank).Include(f => f.Fuel)
-                .Select(o =>
-                new OperationViewModel
+                .Select(o => new OperationViewModel
                 {
                     OperationID = o.OperationID,
                     TankID = o.TankID,

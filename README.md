@@ -17,5 +17,4 @@
 
 В нем, в соответвующих  местах, требуется указать имя пользователя и пароль для доступа к базе данных, размещенной на удаленном SQL Server. 
 
-
-[![build and test](https://github.com/Olgasn/FuelStationWebApi/actions/workflows/deployment.yml/badge.svg)](https://github.com/Olgasn/FuelStationWebApi/actions/workflows/deployment.yml)
+[![build and test](https://github.com/Olgasn/FuelStationWebApi/actions/workflows/deployment.yml/badge.svg?branch=simple)](https://github.com/Olgasn/FuelStationWebApi/actions/workflows/deployment.yml)

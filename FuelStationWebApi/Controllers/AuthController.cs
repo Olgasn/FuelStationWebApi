@@ -1,8 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Identity;
-using System.Threading.Tasks;
-using FuelStationWebApi.Services;
+﻿using FuelStationWebApi.Services;
 using FuelStationWebApi.ViewModels;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using System.Threading.Tasks;
 namespace FuelStationWebApi.Controllers
 {
 
@@ -19,7 +19,7 @@ namespace FuelStationWebApi.Controllers
             if (user != null && await _userManager.CheckPasswordAsync(user, model.Password))
             {
                 var token = _authService.GenerateToken(user);
-                              
+
                 return Ok(token);
             }
 

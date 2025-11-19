@@ -1,6 +1,5 @@
 ﻿using FuelStationWebApi.Data;
 using FuelStationWebApi.Middleware;
-using FuelStationWebApi.Models;
 using FuelStationWebApi.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;

@@ -1,0 +1,12 @@
+﻿@FuelStationWebApi_HostAddress = http://localhost:57126
+
+@id=0
+DELETE {{FuelStationWebApi_HostAddress}}/api/operations/{{id}}
+Authorization: bearer {{$bearerToken}}
+
+###
+
+GET {{FuelStationWebApi_HostAddress}}/api/operations
+Authorization: bearer {{$bearerToken}}
+
+###

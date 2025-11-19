@@ -15,7 +15,7 @@ namespace Tests
             var fuelsContextMock = new Mock<FuelsContext>();
             var operations = TestDataHelper.GetFakeOperationsList();
             fuelsContextMock.Setup(x => x.Operations).ReturnsDbSet(operations);
-         
+
             //Act
             OperationsController OperationsController = new(fuelsContextMock.Object);
             var result = OperationsController.Get();
@@ -26,7 +26,7 @@ namespace Tests
             Assert.Equal(operations.Count, result.Count);
         }
 
-        [Fact]      
+        [Fact]
         public void GetFilteredOperationLists()
         {
             // Arrange
@@ -36,12 +36,12 @@ namespace Tests
 
             var operations = TestDataHelper.GetFakeOperationsList()
                 .Where(op => op.TankID == tankID)
-                .Where(op=>op.FuelID==fuelID).ToList();
+                .Where(op => op.FuelID == fuelID).ToList();
             fuelsContextMock.Setup(x => x.Operations).ReturnsDbSet(operations);
 
             //Act
             OperationsController OperationsController = new(fuelsContextMock.Object);
-            var result = OperationsController.GetFilteredOperations(fuelID,tankID);
+            var result = OperationsController.GetFilteredOperations(fuelID, tankID);
 
             // Assert
             var viewResult = Assert.IsType<List<OperationViewModel>>(result);

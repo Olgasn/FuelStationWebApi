@@ -1,9 +1,13 @@
 # For more info on HTTP files go to https://aka.ms/vs/httpfile
-@WebAPITest_HostAddress = http://localhost:57125
+@WebAPITest_HostAddress = http://localhost:57126
 
 GET {{WebAPITest_HostAddress}}/api/operations
 Accept: application/json
 
+###
+
+GET {{WebAPITest_HostAddress}}/swagger/v1/swagger.json
+Accept: application/json
 ###
 
 DELETE {{WebAPITest_HostAddress}}/api/operations/22

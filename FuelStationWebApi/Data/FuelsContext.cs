@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FuelStationWebApi.Data
 {
-    public class FuelsContext: DbContext
+    public class FuelsContext : DbContext
     {
         public FuelsContext(DbContextOptions<FuelsContext> options) : base(options)
         {

@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 using Serilog;
 using Serilog.Events;
 using System;
@@ -59,6 +59,17 @@ namespace FuelStationWebApi
             //connectionString = builder.Configuration.GetConnectionString("FuelConnectionMysql");
             //services.AddDbContext<FuelsContext>(options =>
             //    options.UseMySQL(connectionString));
+
+            // Политика CORS "AllowAll", которая подключается ниже через app.UseCors("AllowAll").
+            // Разрешает запросы с любых источников, любыми методами и заголовками (удобно для учебного примера);
+            // в реальном приложении список источников следует ограничить через WithOrigins(...).
+            services.AddCors(options =>
+            {
+                options.AddPolicy("AllowAll", policy => policy
+                    .AllowAnyOrigin()
+                    .AllowAnyMethod()
+                    .AllowAnyHeader());
+            });
 
             // Add framework services.
             services.AddControllers();

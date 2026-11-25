@@ -1,0 +1,11 @@
+﻿@FuelStationWebApi_HostAddress = http://localhost:57126
+
+GET {{FuelStationWebApi_HostAddress}}/api/operations
+Authorization: bearer {{$bearerToken}}
+
+###
+
+GET {{FuelStationWebApi_HostAddress}}/api/operations/fuels
+Authorization: bearer {{$bearerToken}}
+
+###

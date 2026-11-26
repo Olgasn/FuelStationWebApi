@@ -27,7 +27,7 @@
 #   DELETE /api/operations/{id}                     удаление операции
 #
 # Данные для тестов берутся из начального набора БД (DbInitializer):
-# топливо с кодами 1..35 и емкости с кодами 1..35.
+# топливо с кодами 1..14 и емкости с кодами 1..35.
 
 @WebAPITest_HostAddress = http://localhost:57126
 
@@ -107,7 +107,7 @@ Accept: application/json
 # 3. GET /api/operations/fuels и /api/operations/tanks - справочники
 # ==============================================================================
 
-# Ожидается: 200, массив из 35 видов топлива
+# Ожидается: 200, массив из 14 видов топлива
 # { fuelID, fuelType, fuelDensity, operations }.
 GET {{WebAPITest_HostAddress}}/api/operations/fuels
 Accept: application/json

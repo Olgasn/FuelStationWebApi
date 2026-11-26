@@ -1,6 +1,6 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
+using System;
 using System.Threading.Tasks;
 
 namespace FuelStationWebApi.Data
@@ -8,10 +8,10 @@ namespace FuelStationWebApi.Data
     //Инициализация базы данных первой учетной записью и двумя ролями admin и user
     public static class DbUserInitializer
     {
-        public static async Task Initialize(HttpContext context)
+        public static async Task Initialize(IServiceProvider services)
         {
-            UserManager<IdentityUser> userManager = context.RequestServices.GetRequiredService<UserManager<IdentityUser>>();
-            RoleManager<IdentityRole> roleManager = context.RequestServices.GetRequiredService<RoleManager<IdentityRole>>();
+            UserManager<IdentityUser> userManager = services.GetRequiredService<UserManager<IdentityUser>>();
+            RoleManager<IdentityRole> roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
             string adminEmail = "admin@gmail.com";
             string adminName = "admin@gmail.com";
 

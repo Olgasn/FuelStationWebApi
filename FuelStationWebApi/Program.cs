@@ -1,5 +1,4 @@
 ﻿using FuelStationWebApi.Data;
-using FuelStationWebApi.Middleware;
 using FuelStationWebApi.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
@@ -180,8 +179,31 @@ namespace FuelStationWebApi
             app.UseDefaultFiles();
             app.UseStaticFiles();
 
-            //Инициализация баз данных
-            app.UseDbInitializer();
+            //Инициализация баз данных: выполняется один раз при запуске, до начала приема запросов.
+            //Ошибка инициализации одной из баз записывается в журнал и не прерывает запуск службы.
+            using (var scope = app.Services.CreateScope())
+            {
+                var serviceProvider = scope.ServiceProvider;
+                try
+                {
+                    // роли и учетная запись администратора; метод асинхронный, а Main - нет,
+                    // поэтому при запуске дожидаемся его завершения
+                    DbUserInitializer.Initialize(serviceProvider).GetAwaiter().GetResult();
+                }
+                catch (Exception exception)
+                {
+                    Log.Fatal(exception, "An error occurred while users db initialization");
+                }
+                try
+                {
+                    FuelsContext context = serviceProvider.GetRequiredService<FuelsContext>();
+                    DbInitializer.Initialize(context);
+                }
+                catch (Exception exception)
+                {
+                    Log.Fatal(exception, "An error occurred while fuels db initialization");
+                }
+            }
 
             if (!app.Environment.IsDevelopment())
             {

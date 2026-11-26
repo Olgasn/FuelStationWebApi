@@ -18,15 +18,22 @@ namespace FuelStationWebApi
     {
         public static void Main(string[] args)
         {
-            // Запись действий в журнал с использованием пакета Serilog
+            // Запись действий в журнал с использованием пакета Serilog:
+            // сообщения выводятся в консоль и записываются в текстовый файл (для каждых суток создается новый файл)
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
+                .WriteTo.Console()
                 .WriteTo.File("FuelStationWebApiLog-.txt", rollingInterval:
                     RollingInterval.Day)
                 .CreateLogger();
 
 
             WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+
+            // Подключение Serilog к узлу приложения: через него проходят и сообщения самой платформы ASP.NET Core.
+            // Стандартные поставщики журнала при этом заменяются, поэтому уровни сообщений задаются настройкой выше,
+            // а раздел Logging файла appsettings.json при использовании Serilog не действовал бы и потому в нем отсутствует.
+            builder.Host.UseSerilog();
 
             var services = builder.Services;
 

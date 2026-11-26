@@ -16,7 +16,7 @@ namespace FuelStationWebApi.Controllers
         /// <summary>
         /// Получение списка всех операций
         /// </summary>
-        // GET api/values
+        // GET api/operations
         [HttpGet]
         [Produces("application/json")]
         public List<OperationViewModel> Get()
@@ -102,7 +102,7 @@ namespace FuelStationWebApi.Controllers
         /// </remarks>
         /// <param name="id">Код операции</param>
         /// <returns>JSON</returns>
-        // GET api/values/5
+        // GET api/operations/{id}
         [HttpGet("{id}")]
         public IActionResult Get(int id)
         {
@@ -115,7 +115,7 @@ namespace FuelStationWebApi.Controllers
         /// <summary>
         /// Регистрация новой приходной или расходной операции
         /// </summary>
-        // POST api/values
+        // POST api/operations
         [HttpPost]
         public IActionResult Post([FromBody] Operation operation)
         {
@@ -135,7 +135,7 @@ namespace FuelStationWebApi.Controllers
         /// </remarks>
         /// <param name="operation">объект, определяющий операцию</param>
         /// <returns>Статус</returns>
-        // PUT api/values/5
+        // PUT api/operations
         [HttpPut]
         public IActionResult Put([FromBody] Operation operation)
         {
@@ -159,7 +159,7 @@ namespace FuelStationWebApi.Controllers
         /// </remarks>
         /// <param name="id">Код операции</param>
         /// <returns>Статус</returns>
-        // DELETE api/values/5
+        // DELETE api/operations/{id}
         [HttpDelete("{id}")]
         public IActionResult Delete(int id)
         {

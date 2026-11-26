@@ -4,10 +4,13 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width" />
     <title>Операции</title>
+    <!-- логотип как значок вкладки браузера -->
+    <link rel="icon" href="favicon.ico" sizes="32x32" />
+    <link rel="icon" href="img/logo.svg" type="image/svg+xml" />
     <link href="lib/bootstrap/css/bootstrap.css" rel="stylesheet" />
-    <script src="lib/jquery/dist/jquery.js"></script>
-    <link href="lib/jquery-ui/themes/base/jquery-ui.min.css" rel="stylesheet" />
-    <script src="lib/jquery-ui/jquery-ui.js"></script>
+    <script src="lib/jquery/jquery.js"></script>
+    <link href="lib/jquery-ui/dist/themes/base/jquery-ui.min.css" rel="stylesheet" />
+    <script src="lib/jquery-ui/dist/jquery-ui.js"></script>
     <script src="lib/jquery-ui/ui/i18n/datepicker-ru.js"></script>
     <script>
         $(function () {
@@ -19,6 +22,11 @@
 </head>
 <body onload="">
     <div class="container">
+        <!-- логотип и название -->
+        <header class="d-flex align-items-center gap-3 py-3 mb-3 border-bottom">
+            <img src="img/logo.svg" alt="Логотип топливной базы" width="48" height="48" />
+            <span class="fs-4 fw-semibold">Топливная база</span>
+        </header>
         <h2>Список операций</h2>
         <form name="operationForm">
             <table border="0">
@@ -339,7 +347,7 @@
                 const fuels = await response.json();
                 listItems += "<option value=0 selected>(выбор)</option>";
                 fuels.forEach(function (fuel) {
-                    listItems += "<option value='" + fuel.fuelId + "'>" + fuel.fuelType + "</option>";
+                    listItems += "<option value='" + fuel.fuelID + "'>" + fuel.fuelType + "</option>";
                 });
                 document.getElementById("fuelId").innerHTML = listItems;
             }
@@ -359,7 +367,7 @@
                 const tanks = await response.json();
                 listItems += "<option value=0 selected>(выбор)</option>";
                 tanks.forEach(function (tank) {
-                    listItems +="<option value='" + tank.tankId + "'>" + tank.tankType + "</option>";
+                    listItems +="<option value='" + tank.tankID + "'>" + tank.tankType + "</option>";
                 });
                 document.getElementById("tankId").innerHTML = listItems;
             }

@@ -10,24 +10,16 @@
             "request": "launch",
             "preLaunchTask": "build",
             // If you have changed target frameworks, make sure to update the program path.
-            "program": "${workspaceFolder}/FuelStationWebApi/bin/Debug/netcoreapp2.0/FuelStationWebApi.dll",
+            "program": "${workspaceFolder}/FuelStationWebApi/bin/Debug/net10.0/FuelStationWebApi.dll",
             "args": [],
             "cwd": "${workspaceFolder}/FuelStationWebApi",
             "stopAtEntry": false,
             "internalConsoleOptions": "openOnSessionStart",
-            "launchBrowser": {
-                "enabled": true,
-                "args": "${auto-detect-url}",
-                "windows": {
-                    "command": "cmd.exe",
-                    "args": "/C start ${auto-detect-url}"
-                },
-                "osx": {
-                    "command": "open"
-                },
-                "linux": {
-                    "command": "xdg-open"
-                }
+            // Открывает страницу Swagger UI в браузере, когда служба сообщит адрес, по которому она принимает запросы
+            "serverReadyAction": {
+                "action": "openExternally",
+                "pattern": "\\bNow listening on:\\s+(https?://\\S+)",
+                "uriFormat": "%s/swagger/index.html"
             },
             "env": {
                 "ASPNETCORE_ENVIRONMENT": "Development"
@@ -42,5 +34,5 @@
             "request": "attach",
             "processId": "${command:pickProcess}"
         }
-    ,]
+    ]
 }

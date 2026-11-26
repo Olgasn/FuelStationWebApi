@@ -1,5 +1,6 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace FuelStationWebApi.Models
 {
@@ -20,8 +21,12 @@ namespace FuelStationWebApi.Models
         [DataType(DataType.Date)]
         public DateTime Date { get; set; }
         //ссылка на виды топлива
+        //Атрибут JsonIgnore исключает свойство из обмена данными в формате JSON. Иначе клиент мог бы передать в теле
+        //запроса вложенный объект fuel, и Entity Framework создал бы или изменил запись справочника вместе с операцией
+        [JsonIgnore]
         public virtual Fuel Fuel { get; set; }
-        //ссылка на емкости
+        //ссылка на емкости (см. комментарий выше)
+        [JsonIgnore]
         public virtual Tank Tank { get; set; }
 
     }

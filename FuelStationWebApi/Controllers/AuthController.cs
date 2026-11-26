@@ -15,6 +15,11 @@ namespace FuelStationWebApi.Controllers
         [HttpPost]
         public async Task<IActionResult> Post([FromBody] LoginViewModel model)
         {
+            // тело запроса пусто или в нем не указаны адрес электронной почты и пароль
+            if (model == null || string.IsNullOrEmpty(model.Email) || string.IsNullOrEmpty(model.Password))
+            {
+                return BadRequest();
+            }
             var user = await _userManager.FindByEmailAsync(model.Email);
             if (user != null && await _userManager.CheckPasswordAsync(user, model.Password))
             {

@@ -66,8 +66,10 @@ namespace Tests
             //Заполнение таблицы операций
             for (int operationID = 1; operationID <= operations_number; operationID++)
             {
-                int tankID = randObj.Next(1, tanks_number);
-                int fuelID = randObj.Next(1, fuels_number);
+                // верхняя граница Random.Next не включается, поэтому прибавляем 1,
+                // иначе операции никогда не попадут в последнюю емкость и к последнему виду топлива
+                int tankID = randObj.Next(1, tanks_number + 1);
+                int fuelID = randObj.Next(1, fuels_number + 1);
                 int inc_exp = randObj.Next(200) - 100;
                 DateTime today = DateTime.Now.Date;
                 DateTime operationdate = today.AddDays(-operationID);

@@ -4,10 +4,13 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width" />
     <title>Операции</title>
+    <!-- логотип как значок вкладки браузера -->
+    <link rel="icon" href="favicon.ico" sizes="32x32" />
+    <link rel="icon" href="img/logo.svg" type="image/svg+xml" />
     <link href="lib/bootstrap/css/bootstrap.css" rel="stylesheet" />
-    <script src="lib/jquery/dist/jquery.js"></script>
-    <link href="lib/jquery-ui/themes/base/jquery-ui.min.css" rel="stylesheet" />
-    <script src="lib/jquery-ui/jquery-ui.js"></script>
+    <script src="lib/jquery/jquery.js"></script>
+    <link href="lib/jquery-ui/dist/themes/base/jquery-ui.min.css" rel="stylesheet" />
+    <script src="lib/jquery-ui/dist/jquery-ui.js"></script>
     <script src="lib/jquery-ui/ui/i18n/datepicker-ru.js"></script>
     <script>
         $(function () {
@@ -18,8 +21,14 @@
 
 </head>
 <body onload="">
-    <a href="index.html" class="btn btn-sm btn-primary">Войти</a>
     <div class="container">
+        <!-- логотип и название -->
+        <header class="d-flex align-items-center gap-3 py-3 mb-3 border-bottom">
+            <img src="img/logo.svg" alt="Логотип топливной базы" width="48" height="48" />
+            <span class="fs-4 fw-semibold">Топливная база</span>
+            <!-- переход на страницу входа, где выдается токен доступа -->
+            <a href="index.html" class="btn btn-sm btn-primary ms-auto">Войти</a>
+        </header>
         <h2>Список операций</h2>
 
         <form name="operationForm">
@@ -66,9 +75,70 @@
             <thead><tr><th>Код</th><th>Топливо</th><th>Емкость</th><th>Приход-расход</th><th>Дата</th><th>Действие</th><th>Действие</th></tr></thead>
             <tbody id="data"></tbody>
         </table>
+
+        <!-- панель переключения страниц -->
+        <div class="d-flex align-items-center gap-3">
+            <ul class="pagination pagination-sm mb-0" id="pagination"></ul>
+            <span id="pageInfo"></span>
+        </div>
     </div>
 
     <script>
+
+        // Постраничный вывод выполняется на стороне клиента:
+        // все операции загружаются один раз, а в таблице показывается только одна страница
+        const pageSize = 10;      // количество строк на одной странице
+        let allOperations = [];   // все загруженные операции (с учетом фильтра)
+        let currentPage = 1;      // номер текущей страницы
+
+        // Количество страниц (не меньше одной, даже если данных нет)
+        function getPageCount() {
+            return Math.max(1, Math.ceil(allOperations.length / pageSize));
+        }
+
+        // Вывод в таблицу строк указанной страницы и обновление панели страниц
+        function showPage(page) {
+            // номер страницы не должен выходить за допустимые границы
+            currentPage = Math.min(Math.max(page, 1), getPageCount());
+            const rows = document.querySelector("table tbody#data");
+            rows.innerHTML = "";
+            // берем из общего списка только операции текущей страницы
+            const start = (currentPage - 1) * pageSize;
+            allOperations.slice(start, start + pageSize).forEach(operation => rows.append(row(operation)));
+            showPager();
+        }
+
+        // Формирование панели страниц: « ‹ 1 2 3 4 5 › »
+        function showPager() {
+            const pageCount = getPageCount();
+            const pager = document.getElementById("pagination");
+            pager.innerHTML = "";
+            pager.append(pageItem("«", 1, currentPage === 1));
+            pager.append(pageItem("‹", currentPage - 1, currentPage === 1));
+            // показываем не более пяти номеров страниц вокруг текущей
+            const first = Math.max(1, Math.min(currentPage - 2, pageCount - 4));
+            const last = Math.min(pageCount, first + 4);
+            for (let page = first; page <= last; page++)
+                pager.append(pageItem(page, page, false, page === currentPage));
+            pager.append(pageItem("›", currentPage + 1, currentPage === pageCount));
+            pager.append(pageItem("»", pageCount, currentPage === pageCount));
+            document.getElementById("pageInfo").textContent =
+                "Страница " + currentPage + " из " + pageCount + ", всего операций: " + allOperations.length;
+        }
+
+        // создание одной кнопки панели страниц
+        function pageItem(text, page, disabled, active) {
+            const li = document.createElement("li");
+            li.className = "page-item" + (disabled ? " disabled" : "") + (active ? " active" : "");
+            const button = document.createElement("button");
+            button.type = "button";
+            button.className = "page-link";
+            button.disabled = disabled;
+            button.append(text);
+            button.addEventListener("click", () => showPage(page));
+            li.append(button);
+            return li;
+        }
 
         // Получение всех операций
         async function Getoperations() {
@@ -82,11 +152,9 @@
             });
             // если запрос прошел нормально
             if (response.ok === true) {
-                // получаем данные
-                const operations = await response.json();
-                const rows = document.querySelector("table tbody#data");
-                // добавляем полученные элементы в таблицу
-                operations.forEach(operation => rows.append(row(operation)));
+                // получаем данные и показываем первую страницу
+                allOperations = await response.json();
+                showPage(1);
             }
 
         }
@@ -107,12 +175,9 @@
             });
             // если запрос прошел нормально
             if (response.ok === true) {
-                // получаем данные
-                const operations = await response.json();
-                document.getElementById("data").innerHTML = "";
-                const rows = document.querySelector("table tbody#data");
-                // добавляем полученные элементы в таблицу
-                operations.forEach(operation => rows.append(row(operation)));
+                // получаем данные и показываем первую страницу
+                allOperations = await response.json();
+                showPage(1);
             }
         }
         // Получение одной операции
@@ -159,7 +224,9 @@
                 var form = document.forms["operationForm"];
                 operation.tankType = form.elements["tankId"].options[tankId].text;
                 operation.fuelType = form.elements["fuelId"].options[fuelId].text;
-                document.querySelector("table tbody#data").append(row(operation));
+                // новая операция добавляется в конец списка, переходим на последнюю страницу
+                allOperations.push(operation);
+                showPage(getPageCount());
             }
             else {
                 const error = await response.json();
@@ -189,7 +256,10 @@
                 var form = document.forms["operationForm"];
                 operation.tankType = form.elements["tankId"].options[tankId].text;
                 operation.fuelType = form.elements["fuelId"].options[fuelId].text;
-                document.querySelector("tr[data-rowid='" + operation.operationID + "']").replaceWith(row(operation));
+                // заменяем операцию в общем списке и перерисовываем текущую страницу
+                const index = allOperations.findIndex(o => o.operationID === operation.operationID);
+                allOperations[index] = operation;
+                showPage(currentPage);
             }
             else {
                 const error = await response.json();
@@ -217,7 +287,10 @@
             });
             if (response.ok === true) {
                 const operation = await response.json();
-                document.querySelector("tr[data-rowid='" + operation.operationID + "']").remove();
+                // удаляем операцию из общего списка и перерисовываем текущую страницу
+                // (если на ней не осталось строк, showPage перейдет на предыдущую)
+                allOperations = allOperations.filter(o => o.operationID !== operation.operationID);
+                showPage(currentPage);
             }
             else {
                 const error = await response.json();
@@ -301,7 +374,7 @@
                 const fuels = await response.json();
                 listItems += "<option value=0 selected>(выбор)</option>";
                 fuels.forEach(function (fuel) {
-                    listItems += "<option value='" + fuel.fuelId + "'>" + fuel.fuelType + "</option>";
+                    listItems += "<option value='" + fuel.fuelID + "'>" + fuel.fuelType + "</option>";
                 });
                 document.getElementById("fuelId").innerHTML = listItems;
             }
@@ -324,7 +397,7 @@
                 const tanks = await response.json();
                 listItems += "<option value=0 selected>(выбор)</option>";
                 tanks.forEach(function (tank) {
-                    listItems += "<option value='" + tank.tankId + "'>" + tank.tankType + "</option>";
+                    listItems += "<option value='" + tank.tankID + "'>" + tank.tankType + "</option>";
                 });
                 document.getElementById("tankId").innerHTML = listItems;
             }

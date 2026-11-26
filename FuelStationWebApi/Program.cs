@@ -10,7 +10,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 using Serilog;
 using Serilog.Events;
 using System;
@@ -24,15 +24,23 @@ namespace FuelStationWebApi
     {
         public static void Main(string[] args)
         {
-            // Запись действий в журнал с использованием пакета Serilog
+            // Запись действий в журнал с использованием пакета Serilog:
+            // сообщения выводятся в консоль и записываются в текстовый файл (для каждых суток создается новый файл)
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
+                .WriteTo.Console()
                 .WriteTo.File("FuelStationWebApiLog-.txt", rollingInterval:
                     RollingInterval.Day)
                 .CreateLogger();
 
 
             WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+
+            // Подключение Serilog к узлу приложения: через него проходят и сообщения самой платформы ASP.NET Core.
+            // Стандартные поставщики журнала при этом заменяются, поэтому уровни сообщений задаются настройкой выше,
+            // а раздел Logging файла appsettings.json при использовании Serilog не действовал бы и потому в нем отсутствует.
+            builder.Host.UseSerilog();
+
             var configuration = builder.Configuration;
             var services = builder.Services;
 
@@ -104,6 +112,17 @@ namespace FuelStationWebApi
 
             builder.Services.AddTransient<AuthService>();
 
+            // Политика CORS "AllowAll", которая подключается ниже через app.UseCors("AllowAll").
+            // Разрешает запросы с любых источников, любыми методами и заголовками (удобно для учебного примера);
+            // в реальном приложении список источников следует ограничить через WithOrigins(...).
+            services.AddCors(options =>
+            {
+                options.AddPolicy("AllowAll", policy => policy
+                    .AllowAnyOrigin()
+                    .AllowAnyMethod()
+                    .AllowAnyHeader());
+            });
+
             // Add framework services.
             services.AddControllers();
 
@@ -137,21 +156,12 @@ namespace FuelStationWebApi
 
                 c.AddSecurityDefinition("Bearer", securityScheme);
 
-                var securityRequirement = new OpenApiSecurityRequirement
+                // Требование применять схему "Bearer" ко всем методам. В Microsoft.OpenApi 2.x ссылка на схему
+                // создается из документа OpenAPI, поэтому требование задается функцией, получающей документ.
+                c.AddSecurityRequirement(document => new OpenApiSecurityRequirement
                 {
-                    {
-                        new OpenApiSecurityScheme
-                        {
-                            Reference = new OpenApiReference
-                            {
-                                Type = ReferenceType.SecurityScheme,
-                                Id = "Bearer"
-                            }
-                        },
-                        Array.Empty<string>()
-                    }
-                };
-                c.AddSecurityRequirement(securityRequirement);
+                    [new OpenApiSecuritySchemeReference("Bearer", document)] = []
+                });
                 // Set the comments path for the Swagger JSON and UI.
                 var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
                 var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);

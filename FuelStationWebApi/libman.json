@@ -3,18 +3,42 @@
   "defaultProvider": "cdnjs",
   "libraries": [
     {
-      "library": "jquery@3.7.1",
-      "destination": "wwwroot/lib/jquery/"
+      "provider": "cdnjs",
+      "library": "jquery@4.1.0",
+      "destination": "wwwroot/lib/jquery/",
+      "files": [
+        "jquery.js",
+        "jquery.min.js",
+        "jquery.min.map",
+        "jquery.slim.js",
+        "jquery.slim.min.js",
+        "jquery.slim.min.map"
+      ]
     },
     {
       "provider": "cdnjs",
-      "library": "jquery@3.7.1",
-      "destination": "wwwroot/lib/jquery/"
-    },
-    {
-      "provider": "cdnjs",
-      "library": "bootstrap@5.3.2",
+      "library": "bootstrap@5.3.9",
       "destination": "wwwroot/lib/bootstrap/"
+    },
+    {
+      "provider": "jsdelivr",
+      "library": "jquery-ui@1.14.2",
+      "destination": "wwwroot/lib/jquery-ui/",
+      "files": [
+        "dist/jquery-ui.js",
+        "dist/jquery-ui.min.js",
+        "dist/themes/base/jquery-ui.css",
+        "dist/themes/base/jquery-ui.min.css",
+        "dist/themes/base/theme.css",
+        "dist/themes/base/images/ui-icons_444444_256x240.png",
+        "dist/themes/base/images/ui-icons_555555_256x240.png",
+        "dist/themes/base/images/ui-icons_777620_256x240.png",
+        "dist/themes/base/images/ui-icons_777777_256x240.png",
+        "dist/themes/base/images/ui-icons_cc0000_256x240.png",
+        "dist/themes/base/images/ui-icons_ffffff_256x240.png",
+        "ui/i18n/datepicker-ru.js",
+        "LICENSE.txt"
+      ]
     }
   ]
 }

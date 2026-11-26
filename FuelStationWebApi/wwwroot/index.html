@@ -4,11 +4,19 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width" />
     <title>Топливная станция</title>
+    <!-- логотип как значок вкладки браузера -->
+    <link rel="icon" href="favicon.ico" sizes="32x32" />
+    <link rel="icon" href="img/logo.svg" type="image/svg+xml" />
     <link href="lib/bootstrap/css/bootstrap.css" rel="stylesheet" />
 
 </head>
 <body>
     <div class="container">
+        <!-- логотип и название -->
+        <header class="d-flex align-items-center gap-3 py-3 mb-3 border-bottom">
+            <img src="img/logo.svg" alt="Логотип топливной базы" width="48" height="48" />
+            <span class="fs-4 fw-semibold">Топливная база</span>
+        </header>
         <h3>Вход на сайт</h3>
         <div id="userInfo" style="display:none;">
             <p>Добро пожаловать <span id="userName"></span>!</p>

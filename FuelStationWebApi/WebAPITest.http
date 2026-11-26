@@ -1,0 +1,727 @@
+﻿# Набор тестов всех конечных точек FuelStationWebApi
+# Формат: .http (актуальная версия Visual Studio 2022 и VS Code с расширением REST Client).
+# Документация: https://aka.ms/vs/httpfile
+#
+# Как пользоваться
+#   1. Запустите приложение (профиль "FuelStationWebApi" слушает порт 57126,
+#      профиль "IIS Express" - порт 57125; при необходимости поправьте адрес ниже).
+#   2. Сначала отправьте запрос login (раздел 0): он выдает токен доступа (JWT),
+#      который переменная token подставляет в заголовок Authorization всех
+#      запросов к /api/operations. Токен действует 30 минут, после чего запрос
+#      login нужно отправить повторно.
+#   3. Отправляйте запросы по очереди сверху вниз либо по одному.
+#   4. Запросы с именем (директива name) сохраняют ответ; на него ссылаются
+#      последующие запросы через ссылку вида: имя.response.body.$.operationID
+#      Поэтому запрос "создание операции" нужно отправить ДО запросов,
+#      которые используют ее код (GET по коду, PUT, DELETE).
+#   5. Перед каждым запросом указан ожидаемый результат. Он снят с работающего
+#      приложения (ASP.NET Core, SQLite), так что 500 и 405 ниже - это текущее
+#      поведение API, а не ошибка в тесте.
+#   6. Все созданные записи удаляются в разделе 7, поэтому, если пройти файл
+#      сверху вниз, содержимое базы не изменится.
+#
+# Конечные точки. Вход выполняет контроллер AuthController, остальные точки -
+# контроллер OperationsController (маршрут api/operations); все они требуют
+# заголовок Authorization: Bearer <токен>, без него служба отвечает кодом 401:
+#   POST   /api/auth                                вход, выдача токена доступа
+#   GET    /api/operations                          список операций
+#   GET    /api/operations/FilteredOperations       фильтр по FuelID и/или TankID
+#   GET    /api/operations/fuels                    справочник топлива
+#   GET    /api/operations/tanks                    справочник емкостей
+#   GET    /api/operations/{id}                     одна операция
+#   POST   /api/operations                          создание операции
+#   PUT    /api/operations                          изменение операции (код в теле)
+#   DELETE /api/operations/{id}                     удаление операции
+#
+# Данные для тестов берутся из начального набора БД (DbInitializer):
+# топливо с кодами 1..14 и емкости с кодами 1..35.
+
+@WebAPITest_HostAddress = http://localhost:57126
+
+# Токен доступа берется из ответа запроса login (раздел 0). Если ваш клиент не
+# поддерживает такую ссылку, подставьте токен вручную: @token = eyJhbGciOi...
+@token = {{login.response.body.$}}
+
+###
+
+# ==============================================================================
+# 0. POST /api/auth - вход и получение токена доступа (JWT)
+#    Учетная запись admin@gmail.com уже есть в файле users.db; класс
+#    DbUserInitializer создает ее заново, только если она отсутствует.
+#    Токен подписан ключом из раздела JwtSettings файла appsettings.json
+#    и действует 30 минут.
+# ==============================================================================
+
+# Ожидается: 200, application/json, в теле - строка с токеном (три части,
+# разделенные точками). Заголовок Accept: application/json обязателен: без него
+# служба вернет тот же токен как text/plain, без кавычек, и ссылка
+# login.response.body.$ не сработает.
+# Ответ сохраняется под именем login: из него переменная token берет токен.
+# @name login
+POST {{WebAPITest_HostAddress}}/api/auth
+Accept: application/json
+Content-Type: application/json
+
+{
+    "email": "admin@gmail.com",
+    "password": "_Aa123456"
+}
+
+###
+
+# Ожидается: 401 - неверный пароль.
+POST {{WebAPITest_HostAddress}}/api/auth
+Accept: application/json
+Content-Type: application/json
+
+{
+    "email": "admin@gmail.com",
+    "password": "неверный"
+}
+
+###
+
+# Ожидается: 401 - пользователя с таким адресом нет.
+POST {{WebAPITest_HostAddress}}/api/auth
+Accept: application/json
+Content-Type: application/json
+
+{
+    "email": "nobody@gmail.com",
+    "password": "_Aa123456"
+}
+
+###
+
+# Ожидается: 500 (NullReferenceException): тело запроса не проверяется,
+# некорректные данные приводят к необработанному исключению.
+POST {{WebAPITest_HostAddress}}/api/auth
+Accept: application/json
+Content-Type: application/json
+
+###
+
+# Ожидается: 500 (ArgumentNullException): адрес электронной почты не передан.
+POST {{WebAPITest_HostAddress}}/api/auth
+Accept: application/json
+Content-Type: application/json
+
+{}
+
+###
+
+# Ожидается: 415 - принимается только application/json.
+POST {{WebAPITest_HostAddress}}/api/auth
+Content-Type: text/plain
+
+admin@gmail.com
+
+###
+
+# Ожидается: 405 - для адреса api/auth предусмотрен только метод POST.
+GET {{WebAPITest_HostAddress}}/api/auth
+
+###
+
+# Ожидается: 401 - запрос без заголовка Authorization.
+GET {{WebAPITest_HostAddress}}/api/operations
+Accept: application/json
+
+###
+
+# Ожидается: 401 - запрос на изменение данных без токена тоже отклоняется
+# (запись не создается).
+POST {{WebAPITest_HostAddress}}/api/operations
+Content-Type: application/json
+
+{
+    "fuelID": 2,
+    "tankID": 24,
+    "inc_Exp": 1,
+    "date": "2026-11-26"
+}
+
+###
+
+# Ожидается: 401 - справочники тоже защищены.
+GET {{WebAPITest_HostAddress}}/api/operations/fuels
+Accept: application/json
+
+###
+
+# Ожидается: 401 - токен не является корректным JWT.
+GET {{WebAPITest_HostAddress}}/api/operations
+Accept: application/json
+Authorization: Bearer abc.def.ghi
+
+###
+
+# Ожидается: 401 - схема Basic не поддерживается, нужна схема Bearer.
+GET {{WebAPITest_HostAddress}}/api/operations
+Accept: application/json
+Authorization: Basic YWRtaW46eA==
+
+###
+
+# ==============================================================================
+# 1. GET /api/operations - список всех операций
+# ==============================================================================
+
+# Ожидается: 200, application/json, массив объектов
+# { operationID, fuelID, fuelType, tankID, tankType, inc_Exp, date }.
+# Ответ сохраняется под именем listOps: код первой операции используется
+# в разделе 5 для проверки GET по коду существующей записи.
+# @name listOps
+GET {{WebAPITest_HostAddress}}/api/operations
+Authorization: Bearer {{token}}
+Accept: application/json
+
+###
+
+# ==============================================================================
+# 2. GET /api/operations/FilteredOperations - фильтрация операций
+#    Параметры не обязательны; значение <= 0 или нечисловое значение
+#    означает "фильтр по этому полю не применяется".
+# ==============================================================================
+
+# Ожидается: 200, только операции с FuelID = 2 и TankID = 24
+# (в начальных данных такие записи могут отсутствовать - тогда []).
+GET {{WebAPITest_HostAddress}}/api/operations/FilteredOperations?FuelID=2&TankID=24
+Authorization: Bearer {{token}}
+Accept: application/json
+
+###
+
+# Ожидается: 200, только операции с FuelID = 2 (любая емкость).
+GET {{WebAPITest_HostAddress}}/api/operations/FilteredOperations?FuelID=2
+Authorization: Bearer {{token}}
+Accept: application/json
+
+###
+
+# Ожидается: 200, только операции с TankID = 24 (любое топливо).
+GET {{WebAPITest_HostAddress}}/api/operations/FilteredOperations?TankID=24
+Authorization: Bearer {{token}}
+Accept: application/json
+
+###
+
+# Ожидается: 200, без параметров - те же данные, что и в GET /api/operations.
+GET {{WebAPITest_HostAddress}}/api/operations/FilteredOperations
+Authorization: Bearer {{token}}
+Accept: application/json
+
+###
+
+# Ожидается: 200, [] - операций с такими кодами нет.
+GET {{WebAPITest_HostAddress}}/api/operations/FilteredOperations?FuelID=9999&TankID=9999
+Authorization: Bearer {{token}}
+Accept: application/json
+
+###
+
+# Ожидается: 200, FuelID = 0 и TankID = 0 не фильтруют - вернутся все операции.
+GET {{WebAPITest_HostAddress}}/api/operations/FilteredOperations?FuelID=0&TankID=0
+Authorization: Bearer {{token}}
+Accept: application/json
+
+###
+
+# Ожидается: 200, отрицательные значения не фильтруют - вернутся все операции.
+GET {{WebAPITest_HostAddress}}/api/operations/FilteredOperations?FuelID=-1&TankID=-1
+Authorization: Bearer {{token}}
+Accept: application/json
+
+###
+
+# Ожидается: 200, нечисловое значение не привязывается (FuelID = 0),
+# фильтр игнорируется - вернутся все операции (400 не возвращается).
+GET {{WebAPITest_HostAddress}}/api/operations/FilteredOperations?FuelID=abc
+Authorization: Bearer {{token}}
+Accept: application/json
+
+###
+
+# ==============================================================================
+# 3. GET /api/operations/fuels и /api/operations/tanks - справочники
+# ==============================================================================
+
+# Ожидается: 200, массив из 14 видов топлива
+# { fuelID, fuelType, fuelDensity, operations }.
+GET {{WebAPITest_HostAddress}}/api/operations/fuels
+Authorization: Bearer {{token}}
+Accept: application/json
+
+###
+
+# Ожидается: 200, массив из 35 емкостей
+# { tankID, tankType, tankWeight, tankVolume, tankMaterial, tankPicture, operations }.
+GET {{WebAPITest_HostAddress}}/api/operations/tanks
+Authorization: Bearer {{token}}
+Accept: application/json
+
+###
+
+# ==============================================================================
+# 4. POST /api/operations - создание операции
+#    Код (operationID) генерирует база данных, поэтому в теле его не передают.
+#    Лишние поля тела (например fuelType, tankType) сервер игнорирует.
+# ==============================================================================
+
+# Ожидается: 200, в ответе операция с назначенным operationID,
+# inc_Exp = 12.5, date = 2026-11-26T00:00:00, fuel = null, tank = null.
+# Ответ сохраняется под именем createOp: на него ссылаются разделы 5-7.
+# @name createOp
+POST {{WebAPITest_HostAddress}}/api/operations
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+    "fuelID": 2,
+    "tankID": 24,
+    "inc_Exp": 12.5,
+    "date": "2026-11-26"
+}
+
+###
+
+# Ожидается: 200, поле inc_Exp необязательное (float?), в ответе inc_Exp = null.
+# Ответ сохраняется под именем createOpNoIncExp.
+# @name createOpNoIncExp
+POST {{WebAPITest_HostAddress}}/api/operations
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+    "fuelID": 3,
+    "tankID": 5,
+    "date": "2026-11-26"
+}
+
+###
+
+# Ожидается: 500 (FOREIGN KEY constraint failed): проверки существования
+# топлива в контроллере нет, ошибку выдает база данных.
+POST {{WebAPITest_HostAddress}}/api/operations
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+    "fuelID": 9999,
+    "tankID": 24,
+    "inc_Exp": 1,
+    "date": "2026-11-26"
+}
+
+###
+
+# Ожидается: 500 (FOREIGN KEY constraint failed): емкости с кодом 9999 нет.
+POST {{WebAPITest_HostAddress}}/api/operations
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+    "fuelID": 2,
+    "tankID": 9999,
+    "inc_Exp": 1,
+    "date": "2026-11-26"
+}
+
+###
+
+# Ожидается: 500 (FOREIGN KEY constraint failed): пустой объект не отклоняется
+# как некорректный, FuelID = 0 и TankID = 0 нарушают внешние ключи.
+POST {{WebAPITest_HostAddress}}/api/operations
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{}
+
+###
+
+# Ожидается: 400 - пустое тело запроса.
+POST {{WebAPITest_HostAddress}}/api/operations
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+###
+
+# Ожидается: 400 - некорректный JSON.
+POST {{WebAPITest_HostAddress}}/api/operations
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "fuelID": 2, "tankID": 24,
+
+###
+
+# Ожидается: 400 - fuelID должен быть числом.
+POST {{WebAPITest_HostAddress}}/api/operations
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+    "fuelID": "abc",
+    "tankID": 24,
+    "inc_Exp": 1,
+    "date": "2026-11-26"
+}
+
+###
+
+# Ожидается: 400 - значение date не является датой.
+POST {{WebAPITest_HostAddress}}/api/operations
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+    "fuelID": 2,
+    "tankID": 24,
+    "inc_Exp": 1,
+    "date": "не-дата"
+}
+
+###
+
+# Ожидается: 415 - принимается только application/json.
+POST {{WebAPITest_HostAddress}}/api/operations
+Authorization: Bearer {{token}}
+Content-Type: text/plain
+
+fuelID=2&tankID=24
+
+###
+
+# ==============================================================================
+# 5. GET /api/operations/{id} - одна операция
+# ==============================================================================
+
+# Ожидается: 200, операция, созданная запросом createOp
+# (inc_Exp = 12.5, date = 2026-11-26T00:00:00).
+GET {{WebAPITest_HostAddress}}/api/operations/{{createOp.response.body.$.operationID}}
+Authorization: Bearer {{token}}
+Accept: application/json
+
+###
+
+# Ожидается: 200, inc_Exp = null - операция, созданная запросом createOpNoIncExp.
+GET {{WebAPITest_HostAddress}}/api/operations/{{createOpNoIncExp.response.body.$.operationID}}
+Authorization: Bearer {{token}}
+Accept: application/json
+
+###
+
+# Ожидается: 200, первая операция из списка listOps
+# (нужно предварительно отправить запрос listOps из раздела 1).
+GET {{WebAPITest_HostAddress}}/api/operations/{{listOps.response.body.$[0].operationID}}
+Authorization: Bearer {{token}}
+Accept: application/json
+
+###
+
+# Ожидается: 404 - операции с таким кодом нет.
+GET {{WebAPITest_HostAddress}}/api/operations/999999
+Authorization: Bearer {{token}}
+Accept: application/json
+
+###
+
+# Ожидается: 404 - код 0 не существует.
+GET {{WebAPITest_HostAddress}}/api/operations/0
+Authorization: Bearer {{token}}
+Accept: application/json
+
+###
+
+# Ожидается: 404 - нечисловой код не привязывается (id = 0).
+GET {{WebAPITest_HostAddress}}/api/operations/abc
+Authorization: Bearer {{token}}
+Accept: application/json
+
+###
+
+# ==============================================================================
+# 6. PUT /api/operations - изменение операции
+#    Код операции передается в теле запроса, а не в адресе.
+# ==============================================================================
+
+# Ожидается: 200, в ответе обновленная операция:
+# fuelID = 3, tankID = 5, inc_Exp = -7.25, date = 2026-11-27T00:00:00.
+PUT {{WebAPITest_HostAddress}}/api/operations
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+    "operationID": {{createOp.response.body.$.operationID}},
+    "fuelID": 3,
+    "tankID": 5,
+    "inc_Exp": -7.25,
+    "date": "2026-11-27"
+}
+
+###
+
+# Ожидается: 200, GET по коду возвращает уже измененные значения
+# (fuelID = 3, tankID = 5, inc_Exp = -7.25, date = 2026-11-27T00:00:00).
+GET {{WebAPITest_HostAddress}}/api/operations/{{createOp.response.body.$.operationID}}
+Authorization: Bearer {{token}}
+Accept: application/json
+
+###
+
+# Ожидается: 200, inc_Exp сбрасывается в null (поле не передано).
+PUT {{WebAPITest_HostAddress}}/api/operations
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+    "operationID": {{createOpNoIncExp.response.body.$.operationID}},
+    "fuelID": 2,
+    "tankID": 24,
+    "date": "2026-11-28"
+}
+
+###
+
+# Ожидается: 404 - операции с таким кодом нет.
+PUT {{WebAPITest_HostAddress}}/api/operations
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+    "operationID": 999999,
+    "fuelID": 3,
+    "tankID": 5,
+    "inc_Exp": 1,
+    "date": "2026-11-27"
+}
+
+###
+
+# Ожидается: 404 - код не передан, подставляется 0, такой операции нет.
+PUT {{WebAPITest_HostAddress}}/api/operations
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+    "fuelID": 3,
+    "tankID": 5,
+    "inc_Exp": 1,
+    "date": "2026-11-27"
+}
+
+###
+
+# Ожидается: 500 (FOREIGN KEY constraint failed): топлива с кодом 9999 нет,
+# запись при этом не изменяется.
+PUT {{WebAPITest_HostAddress}}/api/operations
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+    "operationID": {{createOp.response.body.$.operationID}},
+    "fuelID": 9999,
+    "tankID": 5,
+    "inc_Exp": 1,
+    "date": "2026-11-27"
+}
+
+###
+
+# Ожидается: 400 - пустое тело запроса.
+PUT {{WebAPITest_HostAddress}}/api/operations
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+###
+
+# Ожидается: 400 - некорректный JSON.
+PUT {{WebAPITest_HostAddress}}/api/operations
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "operationID": 1,
+
+###
+
+# Ожидается: 415 - принимается только application/json.
+PUT {{WebAPITest_HostAddress}}/api/operations
+Authorization: Bearer {{token}}
+Content-Type: text/plain
+
+operationID=1
+
+###
+
+# Ожидается: 405 - PUT с кодом в адресе не поддерживается
+# (маршрута PUT api/operations/{id} нет).
+PUT {{WebAPITest_HostAddress}}/api/operations/{{createOp.response.body.$.operationID}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+    "operationID": {{createOp.response.body.$.operationID}},
+    "fuelID": 3,
+    "tankID": 5
+}
+
+###
+
+# ==============================================================================
+# 7. DELETE /api/operations/{id} - удаление операции
+#    Здесь же удаляются записи, созданные в разделе 4 (очистка).
+# ==============================================================================
+
+# Ожидается: 200, в ответе удаленная операция (последние значения из раздела 6:
+# fuelID = 3, tankID = 5, inc_Exp = -7.25).
+DELETE {{WebAPITest_HostAddress}}/api/operations/{{createOp.response.body.$.operationID}}
+Authorization: Bearer {{token}}
+
+###
+
+# Ожидается: 404 - операция уже удалена, повторное удаление невозможно.
+DELETE {{WebAPITest_HostAddress}}/api/operations/{{createOp.response.body.$.operationID}}
+Authorization: Bearer {{token}}
+
+###
+
+# Ожидается: 404 - GET по удаленной операции.
+GET {{WebAPITest_HostAddress}}/api/operations/{{createOp.response.body.$.operationID}}
+Authorization: Bearer {{token}}
+Accept: application/json
+
+###
+
+# Ожидается: 200, удаляется вторая созданная запись (очистка).
+DELETE {{WebAPITest_HostAddress}}/api/operations/{{createOpNoIncExp.response.body.$.operationID}}
+Authorization: Bearer {{token}}
+
+###
+
+# Ожидается: 404 - операция уже удалена.
+DELETE {{WebAPITest_HostAddress}}/api/operations/{{createOpNoIncExp.response.body.$.operationID}}
+Authorization: Bearer {{token}}
+
+###
+
+# Ожидается: 404 - операции с таким кодом нет.
+DELETE {{WebAPITest_HostAddress}}/api/operations/999999
+Authorization: Bearer {{token}}
+
+###
+
+# Ожидается: 404 - нечисловой код не привязывается (id = 0).
+DELETE {{WebAPITest_HostAddress}}/api/operations/abc
+Authorization: Bearer {{token}}
+
+###
+
+# Ожидается: 405 - DELETE без кода не поддерживается.
+DELETE {{WebAPITest_HostAddress}}/api/operations
+Authorization: Bearer {{token}}
+
+###
+
+# ==============================================================================
+# 8. Неподдерживаемые методы и несуществующие маршруты
+# ==============================================================================
+
+# Ожидается: 405 - POST по адресу с кодом не поддерживается.
+POST {{WebAPITest_HostAddress}}/api/operations/1
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{}
+
+###
+
+# Ожидается: 405 - PATCH не поддерживается.
+PATCH {{WebAPITest_HostAddress}}/api/operations
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{}
+
+###
+
+# Ожидается: 405, заголовок Allow: GET, POST, PUT
+# (OPTIONS без CORS-заголовков не обрабатывается).
+OPTIONS {{WebAPITest_HostAddress}}/api/operations
+
+###
+
+# Ожидается: 404 - маршрута нет.
+GET {{WebAPITest_HostAddress}}/api/unknown
+
+###
+
+# ==============================================================================
+# 9. CORS (политика AllowAll)
+# ==============================================================================
+
+# Ожидается: 204 и заголовки Access-Control-Allow-Origin: *,
+# Access-Control-Allow-Methods: POST,
+# Access-Control-Allow-Headers: content-type,authorization.
+# Предварительный запрос браузер отправляет без токена, поэтому защита
+# конечной точки на него не распространяется; заголовок authorization
+# в списке разрешенных нужен для последующего основного запроса.
+OPTIONS {{WebAPITest_HostAddress}}/api/operations
+Origin: http://example.com
+Access-Control-Request-Method: POST
+Access-Control-Request-Headers: content-type, authorization
+
+###
+
+# Ожидается: 200 и заголовок Access-Control-Allow-Origin: *.
+GET {{WebAPITest_HostAddress}}/api/operations/fuels
+Authorization: Bearer {{token}}
+Accept: application/json
+Origin: http://example.com
+
+###
+
+# ==============================================================================
+# 10. Swagger и статические файлы
+# ==============================================================================
+
+# Ожидается: 200, JSON-описание OpenAPI с путями /api/Auth, /api/Operations,
+# /api/Operations/FilteredOperations, /api/Operations/fuels,
+# /api/Operations/tanks, /api/Operations/{id}. Токен для этого запроса не нужен.
+# В разделе components.securitySchemes описана схема Bearer (http, JWT), а в корне
+# документа security: [{"Bearer": []}] - благодаря этому Swagger UI показывает
+# кнопку Authorize и подставляет введенный токен во все запросы.
+GET {{WebAPITest_HostAddress}}/swagger/v1/swagger.json
+Accept: application/json
+
+###
+
+# Ожидается: 200, HTML-страница Swagger UI.
+GET {{WebAPITest_HostAddress}}/swagger/index.html
+Accept: text/html
+
+###
+
+# Ожидается: 200, HTML-страница (wwwroot/fetch_operations.html).
+GET {{WebAPITest_HostAddress}}/fetch_operations.html
+Accept: text/html
+
+###
+
+# Ожидается: 200, HTML-страница (wwwroot/jq_operations.html).
+GET {{WebAPITest_HostAddress}}/jq_operations.html
+Accept: text/html
+
+###
+
+# Ожидается: 200, HTML-страница входа (wwwroot/index.html).
+GET {{WebAPITest_HostAddress}}/index.html
+Accept: text/html
+
+###
+
+# Ожидается: 200, та же страница входа: компонент UseDefaultFiles подставляет
+# index.html для запроса к корню сайта.
+GET {{WebAPITest_HostAddress}}/
+Accept: text/html
+
+###

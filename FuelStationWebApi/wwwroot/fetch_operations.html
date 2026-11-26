@@ -335,7 +335,6 @@
 
         // Получение списка видов топлива
         async function GetFuels() {
-            var listItems = "";
             // отправляет запрос и получаем ответ
             const response = await fetch('/api/operations/fuels', {
                 method: "GET",
@@ -345,17 +344,19 @@
             if (response.ok === true) {
                 // получаем данные
                 const fuels = await response.json();
-                listItems += "<option value=0 selected>(выбор)</option>";
+                // пункты списка создаются как объекты Option: название вставляется в страницу как текст,
+                // а не как разметка HTML, поэтому символы < и > в названии не будут восприняты как теги
+                const list = document.getElementById("fuelId");
+                list.innerHTML = "";
+                list.append(new Option("(выбор)", 0, true, true));
                 fuels.forEach(function (fuel) {
-                    listItems += "<option value='" + fuel.fuelID + "'>" + fuel.fuelType + "</option>";
+                    list.append(new Option(fuel.fuelType, fuel.fuelID));
                 });
-                document.getElementById("fuelId").innerHTML = listItems;
             }
         }
 
         // Получение списка емкостей
         async function GetTanks() {
-            var listItems = "";
             // отправляет запрос и получаем ответ
             const response = await fetch('/api/operations/tanks', {
                 method: "GET",
@@ -365,11 +366,13 @@
             if (response.ok === true) {
                 // получаем данные
                 const tanks = await response.json();
-                listItems += "<option value=0 selected>(выбор)</option>";
+                // пункты списка создаются как объекты Option (см. комментарий в функции GetFuels)
+                const list = document.getElementById("tankId");
+                list.innerHTML = "";
+                list.append(new Option("(выбор)", 0, true, true));
                 tanks.forEach(function (tank) {
-                    listItems +="<option value='" + tank.tankID + "'>" + tank.tankType + "</option>";
+                    list.append(new Option(tank.tankType, tank.tankID));
                 });
-                document.getElementById("tankId").innerHTML = listItems;
             }
 
         }

@@ -12,7 +12,10 @@
 #      которые используют ее код (GET по коду, PUT, DELETE).
 #   4. Перед каждым запросом указан ожидаемый результат. Он снят с работающего
 #      приложения (ASP.NET Core, SQLite), так что 500 и 405 ниже - это текущее
-#      поведение API, а не ошибка в тесте.
+#      поведение API, а не ошибка в тесте. Причина ошибки в скобках (например,
+#      FOREIGN KEY constraint failed) видна в теле ответа 500 только в среде
+#      Development, которую задают профили запуска; в остальных средах тело
+#      пусто, а причина записывается в журнал.
 #   5. Все созданные записи удаляются в разделе 7, поэтому, если пройти файл
 #      сверху вниз, содержимое базы не изменится.
 #
@@ -124,11 +127,13 @@ Accept: application/json
 # ==============================================================================
 # 4. POST /api/operations - создание операции
 #    Код (operationID) генерирует база данных, поэтому в теле его не передают.
-#    Лишние поля тела (например fuelType, tankType) сервер игнорирует.
+#    Лишние поля тела (например fuelType, tankType) сервер игнорирует. Вложенные
+#    объекты fuel и tank тоже игнорируются (атрибут JsonIgnore у свойств класса
+#    Operation): справочники запросами к операциям не изменяются.
 # ==============================================================================
 
 # Ожидается: 200, в ответе операция с назначенным operationID,
-# inc_Exp = 12.5, date = 2026-11-26T00:00:00, fuel = null, tank = null.
+# inc_Exp = 12.5, date = 2026-11-26T00:00:00 (полей fuel и tank в ответе нет).
 # Ответ сохраняется под именем createOp: на него ссылаются разделы 5-7.
 # @name createOp
 POST {{WebAPITest_HostAddress}}/api/operations
@@ -154,6 +159,30 @@ Content-Type: application/json
     "tankID": 5,
     "date": "2026-11-26"
 }
+
+###
+
+# Ожидается: 200, вложенный объект fuel игнорируется: новый вид топлива не создается,
+# а у операции остаются fuelID = 2 и tankID = 24 из тела запроса.
+# Ответ сохраняется под именем createOpNested; запись удаляется в разделе 7.
+# @name createOpNested
+POST {{WebAPITest_HostAddress}}/api/operations
+Content-Type: application/json
+
+{
+    "fuelID": 2,
+    "tankID": 24,
+    "inc_Exp": 1,
+    "date": "2026-11-26",
+    "fuel": { "fuelType": "Новый вид топлива", "fuelDensity": 1 }
+}
+
+###
+
+# Ожидается: 200, по-прежнему 14 видов топлива: запрос createOpNested
+# запись справочника не создал.
+GET {{WebAPITest_HostAddress}}/api/operations/fuels
+Accept: application/json
 
 ###
 
@@ -323,6 +352,29 @@ Content-Type: application/json
 
 ###
 
+# Ожидается: 200, вложенный объект tank игнорируется: емкость 24 не изменяется,
+# у операции createOpNested меняется только inc_Exp (на 5).
+PUT {{WebAPITest_HostAddress}}/api/operations
+Content-Type: application/json
+
+{
+    "operationID": {{createOpNested.response.body.$.operationID}},
+    "fuelID": 2,
+    "tankID": 24,
+    "inc_Exp": 5,
+    "date": "2026-11-26",
+    "tank": { "tankID": 24, "tankType": "Другое название", "tankVolume": 1 }
+}
+
+###
+
+# Ожидается: 200, название и объем емкости 24 прежние (см. начальные данные:
+# «РГС-50 №24», 50000).
+GET {{WebAPITest_HostAddress}}/api/operations/tanks
+Accept: application/json
+
+###
+
 # Ожидается: 404 - операции с таким кодом нет.
 PUT {{WebAPITest_HostAddress}}/api/operations
 Content-Type: application/json
@@ -429,6 +481,16 @@ DELETE {{WebAPITest_HostAddress}}/api/operations/{{createOpNoIncExp.response.bod
 
 # Ожидается: 404 - операция уже удалена.
 DELETE {{WebAPITest_HostAddress}}/api/operations/{{createOpNoIncExp.response.body.$.operationID}}
+
+###
+
+# Ожидается: 200, удаляется третья созданная запись (очистка).
+DELETE {{WebAPITest_HostAddress}}/api/operations/{{createOpNested.response.body.$.operationID}}
+
+###
+
+# Ожидается: 404 - операция уже удалена.
+DELETE {{WebAPITest_HostAddress}}/api/operations/{{createOpNested.response.body.$.operationID}}
 
 ###
 

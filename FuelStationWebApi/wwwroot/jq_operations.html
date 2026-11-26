@@ -93,11 +93,10 @@
             currentPage = Math.min(Math.max(page, 1), getPageCount());
             // берем из общего списка только операции текущей страницы
             var start = (currentPage - 1) * pageSize;
-            var rows = "";
+            var rows = $("table tbody#data").empty();
             $.each(allOperations.slice(start, start + pageSize), function (index, operation) {
-                rows += row(operation);
+                rows.append(row(operation));
             })
-            $("table tbody#data").html(rows);
             showPager();
         }
 
@@ -242,47 +241,52 @@
                 }
             })
         }
-        // создание строки для таблицы
+        // создание строки для таблицы: значения вставляются в страницу как текст (метод text), а не как разметка HTML,
+        // поэтому символы < и > в данных не будут восприняты как теги
         var row = function (operation) {
-            return "<tr data-rowid='" + operation.operationID + "'><td>" + operation.operationID + "</td>" +
-                "<td>" + operation.fuelType + "</td>" +
-                "<td>" + operation.tankType + "</td>" +
-                "<td>" + operation.inc_Exp + "</td>" +
-                "<td>" + operation.date.substring(0,10) + "</td>" +
-                "<td><a class='editLink' data-id='" + operation.operationID + "'>Изменить</a> | " +
-                "<a class='removeLink' data-id='" + operation.operationID + "'>Удалить</a></td></tr>";
+            return $("<tr></tr>").attr("data-rowid", operation.operationID).append(
+                $("<td></td>").text(operation.operationID),
+                $("<td></td>").text(operation.fuelType),
+                $("<td></td>").text(operation.tankType),
+                $("<td></td>").text(operation.inc_Exp),
+                $("<td></td>").text(operation.date.substring(0, 10)),
+                $("<td></td>").append(
+                    $("<a class='editLink'></a>").attr("data-id", operation.operationID).text("Изменить"),
+                    " | ",
+                    $("<a class='removeLink'></a>").attr("data-id", operation.operationID).text("Удалить")));
         }
 
         // Получение списка видов топлива
         function GetFuels() {
-            var listItems = "";
             $.ajax({
                 url: '/api/operations/fuels',
                 type: 'GET',
                 contentType: "application/json",
                 success: function (fuels) {
-                    listItems += "<option value=0 selected>(выбор)</option>";
+                    // пункты списка создаются как объекты Option: название вставляется в страницу как текст,
+                    // а не как разметка HTML, поэтому символы < и > в названии не будут восприняты как теги
+                    var list = $("#fuelId").empty();
+                    list.append(new Option("(выбор)", 0, true, true));
                     $.each(fuels, function (index, fuel) {
-                        listItems +="<option value='" + fuel.fuelID + "'>" + fuel.fuelType + "</option>";
+                        list.append(new Option(fuel.fuelType, fuel.fuelID));
                     });
-                    $("#fuelId").html(listItems);
                 }
             });
         }
 
         // Получение списка емкостей
         function GetTanks() {
-            var listItems = "";
             $.ajax({
                 url: '/api/operations/tanks',
                 type: 'GET',
                 contentType: "application/json",
                 success: function (tanks) {
-                    listItems += "<option value=0 selected>(выбор)</option>";
+                    // пункты списка создаются как объекты Option (см. комментарий в функции GetFuels)
+                    var list = $("#tankId").empty();
+                    list.append(new Option("(выбор)", 0, true, true));
                     $.each(tanks, function (index, tank) {
-                        listItems += "<option value='" + tank.tankID + "'>" + tank.tankType + "</option>";
+                        list.append(new Option(tank.tankType, tank.tankID));
                     });
-                    $("#tankId").html(listItems);
                 }
             });
         }

@@ -1,10 +1,8 @@
 ﻿using FuelStationWebApi.Data;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi;
 using Serilog;
 using Serilog.Events;
@@ -107,13 +105,15 @@ namespace FuelStationWebApi
 
 
             var app = builder.Build();
+            // Страница сведений об исключениях (UseDeveloperExceptionPage) здесь не подключается:
+            // платформа включает ее сама, но только в среде Development. В остальных средах
+            // подробности ошибок клиенту не показываются, они записываются в журнал.
             app.UseSwagger();
             app.UseSwaggerUI(c =>
             {
                 c.SwaggerEndpoint("/swagger/v1/swagger.json", "FuelStation API V1");
             });
 
-            app.UseDeveloperExceptionPage();
             app.UseDefaultFiles();
             app.UseStaticFiles();
 
@@ -130,11 +130,6 @@ namespace FuelStationWebApi
                 {
                     Log.Fatal(exception, "An error occurred while db initialization");
                 }
-            }
-
-            if (!app.Environment.IsDevelopment())
-            {
-                app.UseDeveloperExceptionPage();
             }
 
             app.UseRouting();
